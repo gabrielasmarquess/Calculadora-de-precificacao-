@@ -1,0 +1,6 @@
+{
+  "name": "Calculadora de Precificação",
+  "description": "Calculadora de precificação profissional para vendedores de produtos físicos e marketplaces, com análise de margem de lucro e simulador de preços em tempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
