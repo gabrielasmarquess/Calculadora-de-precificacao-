@@ -3,155 +3,199 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useRef } from 'react';
-import { PricingState, TargetType } from './types';
-import {
-  DEFAULT_PRICING_STATE,
-  calculateIdealPrice,
-  calculateSaleForPrice,
-} from './utils/pricing';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { authService, subscribeToAuth } from './services/auth';
+import { subscribeToDB, computeFinancialSummary, ordersRepo, purchasesRepo } from './services/db';
+import { UserProfile } from './types/finance';
+import { Navbar } from './components/layout/Navbar';
+import { Sidebar, NavSection } from './components/layout/Sidebar';
+import { AuthModal } from './components/auth/AuthModal';
 
-import { Header } from './components/Header';
-import { CostsSection } from './components/CostsSection';
-import { FeesSection } from './components/FeesSection';
-import { TargetSection } from './components/TargetSection';
-import { ResultCard } from './components/ResultCard';
-import { SaleAnalysis } from './components/SaleAnalysis';
-import { MinPriceCard } from './components/MinPriceCard';
-import { SimulatorSection } from './components/SimulatorSection';
-import { SimulationTable } from './components/SimulationTable';
-import { EducationSection } from './components/EducationSection';
+// Pages
+import { DashboardPage } from './pages/DashboardPage';
+import { CalculatorPage } from './pages/CalculatorPage';
+import { ProductsPage } from './pages/ProductsPage';
+import { OrdersPage } from './pages/OrdersPage';
+import { PurchasesPage } from './pages/PurchasesPage';
+import { TransfersPage } from './pages/TransfersPage';
+import { CashFlowPage } from './pages/CashFlowPage';
+import { ExpensesPage } from './pages/ExpensesPage';
+import { ImportPage } from './pages/ImportPage';
+import { AccountPage } from './pages/AccountPage';
+import { productsRepo } from './services/db';
+import { Product } from './types/finance';
+
+const sectionTitles: Record<NavSection, string> = {
+  dashboard: 'Dashboard Geral',
+  calculator: 'Calculadora de Precificação',
+  products: 'Produtos Cadastrados',
+  orders: 'Vendas e Pedidos',
+  purchases: 'Compras e Fornecedores',
+  transfers: 'Controle de Repasses',
+  cashflow: 'Fluxo de Caixa',
+  expenses: 'Despesas Operacionais',
+  import: 'Importação de Planilhas',
+  account: 'Minha Conta & Segurança',
+};
 
 export default function App() {
-  const [state, setState] = useState<PricingState>(DEFAULT_PRICING_STATE);
-  const resultRef = useRef<HTMLDivElement>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() =>
+    authService.getCurrentUser()
+  );
+  const [currentSection, setCurrentSection] = useState<NavSection>('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [dbVersion, setDbVersion] = useState(0);
+  const [selectedProductForSale, setSelectedProductForSale] = useState<Product | null>(null);
 
-  // Manipuladores de estado para Custos
-  const setProductCost = (val: number) =>
-    setState((prev) => ({ ...prev, productCost: Math.max(0, val) }));
-  const setOtherCosts = (val: number) =>
-    setState((prev) => ({ ...prev, otherCosts: Math.max(0, val) }));
+  // Subscribe to auth state
+  useEffect(() => {
+    return subscribeToAuth((user) => {
+      setCurrentUser(user);
+    });
+  }, []);
 
-  // Manipuladores de estado para Taxas
-  const setCommissionPct = (val: number) =>
-    setState((prev) => ({ ...prev, commissionPct: Math.max(0, val) }));
-  const setFixedFee = (val: number) =>
-    setState((prev) => ({ ...prev, fixedFee: Math.max(0, val) }));
-  const setOtherFeesPct = (val: number) =>
-    setState((prev) => ({ ...prev, otherFeesPct: Math.max(0, val) }));
-  const setOtherFixedFees = (val: number) =>
-    setState((prev) => ({ ...prev, otherFixedFees: Math.max(0, val) }));
-  const setTaxPct = (val: number) =>
-    setState((prev) => ({ ...prev, taxPct: Math.max(0, val) }));
+  // Subscribe to database changes to refresh counters and summaries
+  useEffect(() => {
+    return subscribeToDB(() => {
+      setDbVersion((v) => v + 1);
+    });
+  }, []);
 
-  // Manipuladores de estado para Meta
-  const setTargetType = (type: TargetType) =>
-    setState((prev) => ({ ...prev, targetType: type }));
-  const setDesiredProfit = (val: number) =>
-    setState((prev) => ({ ...prev, desiredProfit: Math.max(0, val) }));
-  const setDesiredMarginPct = (val: number) =>
-    setState((prev) => ({ ...prev, desiredMarginPct: Math.max(0, val) }));
-  const setMinAcceptableMarginPct = (val: number) =>
-    setState((prev) => ({ ...prev, minAcceptableMarginPct: Math.max(0, val) }));
+  const refreshUser = useCallback(() => {
+    setCurrentUser(authService.getCurrentUser());
+  }, []);
 
-  // Cálculo automático em tempo real do preço ideal e da venda
-  const idealCalculation = useMemo(() => {
-    return calculateIdealPrice(state);
-  }, [state]);
-
-  const saleResult = useMemo(() => {
-    if (!idealCalculation.isValid) {
-      return calculateSaleForPrice(0, state);
+  // Financial summary computation
+  const summary = useMemo(() => {
+    if (!currentUser) {
+      return { currentAvailableCash: 0, projectedCash: 0 };
     }
-    return calculateSaleForPrice(idealCalculation.idealPrice, state);
-  }, [idealCalculation, state]);
+    return computeFinancialSummary(currentUser.id);
+  }, [currentUser, dbVersion]);
 
-  // Ação do botão "Calcular"
-  const handleCalculate = () => {
-    if (resultRef.current) {
-      resultRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    setToastMessage('Cálculo atualizado com sucesso!');
-    setTimeout(() => setToastMessage(null), 2500);
+  // Badges for sidebar
+  const pendingTransfersCount = useMemo(() => {
+    if (!currentUser) return 0;
+    const orders = ordersRepo.list(currentUser.id);
+    return orders.filter((o) => o.transferStatus === 'pendente' || o.transferStatus === 'recebido_parcial').length;
+  }, [currentUser, dbVersion]);
+
+  const pendingPurchasesCount = useMemo(() => {
+    if (!currentUser) return 0;
+    const orders = ordersRepo.list(currentUser.id);
+    return orders.filter((o) => o.logisticStatus !== 'pedido_cancelado' && o.items.some((i) => !i.isPurchased)).length;
+  }, [currentUser, dbVersion]);
+
+  const productsCount = useMemo(() => {
+    if (!currentUser) return 0;
+    return productsRepo.list(currentUser.id, false).length;
+  }, [currentUser, dbVersion]);
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
   };
 
-  // Ação do botão "Limpar"
-  const handleReset = () => {
-    setState(DEFAULT_PRICING_STATE);
-    setToastMessage('Valores padrão restaurados.');
-    setTimeout(() => setToastMessage(null), 2500);
-  };
+  // If user is not authenticated, show Auth modal
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-[#F8FAF9] flex items-center justify-center">
+        <AuthModal onSuccess={refreshUser} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] text-slate-800 pb-16">
-      {/* Toast flutuante de feedback */}
-      {toastMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-full shadow-lg border border-slate-700 animate-in fade-in slide-in-from-top-2 duration-200">
-          {toastMessage}
-        </div>
-      )}
+    <div className="min-h-screen bg-[#F8FAF9] text-slate-800 flex">
+      {/* 1. Sidebar */}
+      <Sidebar
+        currentSection={currentSection}
+        onSelectSection={(sec) => setCurrentSection(sec)}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        pendingTransfersCount={pendingTransfersCount}
+        pendingPurchasesCount={pendingPurchasesCount}
+        productsCount={productsCount}
+      />
 
-      {/* Container principal estruturado rigorosamente */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
-        {/* 1. Cabeçalho */}
-        <Header onCalculate={handleCalculate} onReset={handleReset} />
-
-        {/* 2. Custos do produto */}
-        <CostsSection
-          productCost={state.productCost}
-          otherCosts={state.otherCosts}
-          onChangeProductCost={setProductCost}
-          onChangeOtherCosts={setOtherCosts}
+      {/* 2. Main Layout Area */}
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+        {/* Navbar */}
+        <Navbar
+          currentUser={currentUser}
+          currentSectionTitle={sectionTitles[currentSection]}
+          availableCash={summary.currentAvailableCash}
+          projectedCash={summary.projectedCash}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          onLogout={handleLogout}
+          onNavigateToAccount={() => setCurrentSection('account')}
         />
 
-        {/* 3. Taxas */}
-        <FeesSection
-          commissionPct={state.commissionPct}
-          fixedFee={state.fixedFee}
-          otherFeesPct={state.otherFeesPct}
-          otherFixedFees={state.otherFixedFees}
-          taxPct={state.taxPct}
-          onChangeCommissionPct={setCommissionPct}
-          onChangeFixedFee={setFixedFee}
-          onChangeOtherFeesPct={setOtherFeesPct}
-          onChangeOtherFixedFees={setOtherFixedFees}
-          onChangeTaxPct={setTaxPct}
-        />
+        {/* Content Viewport */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-6 max-w-7xl w-full mx-auto">
+          {currentSection === 'dashboard' && (
+            <DashboardPage
+              userId={currentUser.id}
+              onNavigate={(sec) => setCurrentSection(sec as NavSection)}
+            />
+          )}
 
-        {/* 4. Meta de lucro/margem (com Margem mínima aceitável editável) */}
-        <TargetSection
-          targetType={state.targetType}
-          desiredProfit={state.desiredProfit}
-          desiredMarginPct={state.desiredMarginPct}
-          minAcceptableMarginPct={state.minAcceptableMarginPct}
-          onChangeTargetType={setTargetType}
-          onChangeDesiredProfit={setDesiredProfit}
-          onChangeDesiredMarginPct={setDesiredMarginPct}
-          onChangeMinAcceptableMarginPct={setMinAcceptableMarginPct}
-        />
+          {currentSection === 'calculator' && (
+            <CalculatorPage
+              userId={currentUser.id}
+              onNavigateToProducts={() => setCurrentSection('products')}
+            />
+          )}
 
-        {/* Marcador de scroll para o botão Calcular */}
-        <div ref={resultRef} className="pt-1">
-          {/* 5. Resultado automático (Preço Ideal + Card grande detalhado) */}
-          <ResultCard sale={saleResult} state={state} />
-        </div>
+          {currentSection === 'products' && (
+            <ProductsPage
+              userId={currentUser.id}
+              onNavigateToNewSale={(product) => {
+                setSelectedProductForSale(product);
+                setCurrentSection('orders');
+              }}
+            />
+          )}
 
-        {/* 6. Análise da venda */}
-        <SaleAnalysis sale={saleResult} />
+          {currentSection === 'orders' && (
+            <OrdersPage
+              userId={currentUser.id}
+              initialProductToSale={selectedProductForSale}
+              onClearInitialProduct={() => setSelectedProductForSale(null)}
+              onNavigateToTransfers={() => setCurrentSection('transfers')}
+              onNavigateToPurchases={() => setCurrentSection('purchases')}
+            />
+          )}
 
-        {/* 7. Preço necessário para atingir a meta */}
-        <MinPriceCard state={state} />
+          {currentSection === 'purchases' && (
+            <PurchasesPage userId={currentUser.id} />
+          )}
 
-        {/* 8. Simulador “Se eu vender por…” */}
-        <SimulatorSection state={state} />
+          {currentSection === 'transfers' && (
+            <TransfersPage userId={currentUser.id} />
+          )}
 
-        {/* 9. Tabela de simulação de preços */}
-        <SimulationTable state={state} />
+          {currentSection === 'cashflow' && (
+            <CashFlowPage userId={currentUser.id} />
+          )}
 
-        {/* 10. Explicações rápidas */}
-        <EducationSection />
-      </main>
+          {currentSection === 'expenses' && (
+            <ExpensesPage userId={currentUser.id} />
+          )}
+
+          {currentSection === 'import' && (
+            <ImportPage userId={currentUser.id} />
+          )}
+
+          {currentSection === 'account' && (
+            <AccountPage
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              onProfileUpdated={refreshUser}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }
