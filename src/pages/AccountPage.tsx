@@ -19,8 +19,11 @@ import {
   MapPin,
   Lock,
   Trash2,
+  Download,
+  HardDrive,
 } from 'lucide-react';
 import { authService } from '../services/auth';
+import { exportDeviceBackupJson } from '../services/db';
 import { UserProfile, UserSession, AccessLog } from '../types/finance';
 
 interface AccountPageProps {
@@ -647,6 +650,44 @@ export const AccountPage: React.FC<AccountPageProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+
+          {/* Card: Cópia de Segurança & Preservação de Dados */}
+          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4">
+            <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200">
+              <HardDrive className="w-4 h-4 text-[#064E3B]" />
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Backup & Preservação dos Dados</h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Gere uma cópia instantânea de todos os produtos, pedidos, compras e despesas salvos neste dispositivo.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <div className="text-xs text-emerald-950">
+                  <span className="font-bold block text-emerald-950">Dados protegidos na nuvem e localmente</span>
+                  Suas vendas e produtos estão sincronizados com sua conta. Você também pode exportar um arquivo JSON de segurança a qualquer momento.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const res = exportDeviceBackupJson();
+                  if (res.success) {
+                    setSuccessMsg(`Backup baixado com sucesso! Arquivo com ${res.totalRecords} registro(s) salvo no seu aparelho.`);
+                  } else {
+                    setErrorMsg('Não foi possível gerar o arquivo de backup.');
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl text-xs transition-colors shrink-0 shadow-xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Baixar Backup Completo (.JSON)</span>
+              </button>
+            </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs text-slate-500">Deseja desconectar sua conta?</span>

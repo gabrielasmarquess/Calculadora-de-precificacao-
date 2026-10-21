@@ -1221,41 +1221,66 @@ async function startServer() {
     const userId = user.id;
     const { products, orders, purchases, expenses, transfers, cashBalance, memories } = req.body;
 
-    const hasServerData =
-      (db.products[userId] && db.products[userId].length > 0) ||
-      (db.orders[userId] && db.orders[userId].length > 0) ||
-      (db.expenses[userId] && db.expenses[userId].length > 0);
+    const mergeServerItems = <T extends { id?: string; updatedAt?: string }>(
+      serverList: T[] = [],
+      clientList: T[] = []
+    ): T[] => {
+      const map = new Map<string, T>();
+      serverList.forEach((item, i) => map.set(item.id || `s_${i}`, { ...item, userId }));
+      clientList.forEach((item, i) => {
+        const key = item.id || `c_${i}`;
+        if (!map.has(key)) {
+          map.set(key, { ...item, userId });
+        } else {
+          const existing = map.get(key)!;
+          const clientTime = new Date(item.updatedAt || 0).getTime();
+          const serverTime = new Date(existing.updatedAt || 0).getTime();
+          if (clientTime >= serverTime) {
+            map.set(key, { ...item, userId });
+          }
+        }
+      });
+      return Array.from(map.values());
+    };
 
-    if (!hasServerData) {
-      if (Array.isArray(products) && products.length > 0) {
-        db.products[userId] = products.map((p) => ({ ...p, userId }));
-      }
-      if (Array.isArray(orders) && orders.length > 0) {
-        db.orders[userId] = orders.map((o) => ({ ...o, userId }));
-      }
-      if (Array.isArray(purchases) && purchases.length > 0) {
-        db.purchases[userId] = purchases.map((p) => ({ ...p, userId }));
-      }
-      if (Array.isArray(expenses) && expenses.length > 0) {
-        db.expenses[userId] = expenses.map((e) => ({ ...e, userId }));
-      }
-      if (Array.isArray(transfers) && transfers.length > 0) {
-        db.transfers[userId] = transfers.map((t) => ({ ...t, userId }));
-      }
-      if (cashBalance) {
-        db.cashBalances[userId] = { ...cashBalance, userId };
-      }
-      if (Array.isArray(memories) && memories.length > 0) {
-        db.memories[userId] = memories.map((m) => ({ ...m, userId }));
-      }
+    let hadChanges = false;
+    if (Array.isArray(products) && products.length > 0) {
+      db.products[userId] = mergeServerItems(db.products[userId] || [], products);
+      hadChanges = true;
+    }
+    if (Array.isArray(orders) && orders.length > 0) {
+      db.orders[userId] = mergeServerItems(db.orders[userId] || [], orders);
+      hadChanges = true;
+    }
+    if (Array.isArray(purchases) && purchases.length > 0) {
+      db.purchases[userId] = mergeServerItems(db.purchases[userId] || [], purchases);
+      hadChanges = true;
+    }
+    if (Array.isArray(expenses) && expenses.length > 0) {
+      db.expenses[userId] = mergeServerItems(db.expenses[userId] || [], expenses);
+      hadChanges = true;
+    }
+    if (Array.isArray(transfers) && transfers.length > 0) {
+      db.transfers[userId] = mergeServerItems(db.transfers[userId] || [], transfers);
+      hadChanges = true;
+    }
+    if (cashBalance && cashBalance.amount > 0) {
+      db.cashBalances[userId] = { ...cashBalance, userId };
+      hadChanges = true;
+    }
+    if (Array.isArray(memories) && memories.length > 0) {
+      db.memories[userId] = mergeServerItems(db.memories[userId] || [], memories);
+      hadChanges = true;
+    }
 
+    if (hadChanges) {
       db.versions[userId] = (db.versions[userId] || 1) + 1;
       saveDatabase(db);
     }
 
     res.json({
       success: true,
-      migrated: !hasServerData,
+      migrated: hadChanges,
       version: db.versions[userId] || 1,
     });
   });

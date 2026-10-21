@@ -12,8 +12,11 @@ import {
   HelpCircle,
   CheckCircle2,
   Key,
+  Download,
+  Smartphone,
 } from 'lucide-react';
 import { authService } from '../../services/auth';
+import { exportDeviceBackupJson } from '../../services/db';
 
 interface AuthModalProps {
   onSuccess: () => void;
@@ -500,6 +503,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSuccess }) => {
                 </button>
               </div>
             )}
+
+            {/* Safe Storage & Local Data Protection Notice */}
+            <div className="mt-4 p-3 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-left">
+              <div className="flex items-start gap-2.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-emerald-950 leading-relaxed">
+                  <span className="font-bold block text-emerald-950 mb-0.5">Seus dados estão protegidos</span>
+                  Tudo o que você cadastrou neste aparelho está guardado com segurança na memória deste dispositivo. Ao entrar na sua conta, esses dados são sincronizados automaticamente com a nuvem, sem apagar nada.
+                </div>
+              </div>
+              <div className="mt-2.5 pt-2 border-t border-emerald-200/60 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const res = exportDeviceBackupJson();
+                    if (res.success) {
+                      setInfoMsg(`Backup baixado com sucesso! Arquivo salvo no seu aparelho com ${res.totalRecords} registro(s).`);
+                    } else {
+                      setErrorMsg('Nenhum dado encontrado para backup ou erro ao baixar.');
+                    }
+                  }}
+                  className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1.5 hover:underline cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Baixar cópia de segurança deste celular (.JSON)</span>
+                </button>
+              </div>
+            </div>
           </form>
         )}
 
