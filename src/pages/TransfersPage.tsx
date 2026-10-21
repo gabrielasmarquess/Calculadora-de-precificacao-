@@ -17,6 +17,7 @@ import {
 import { ordersRepo, transferEntriesRepo, logsRepo } from '../services/db';
 import { Order, TransferPaymentEntry, TransferStatus } from '../types/finance';
 import { formatCurrency } from '../utils/pricing';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 
 interface TransfersPageProps {
   userId: string;
@@ -600,15 +601,14 @@ export const TransfersPage: React.FC<TransfersPageProps> = ({ userId }) => {
                         <label className="block text-xs font-semibold text-slate-700 mb-1">
                           Valor efetivamente creditado em conta (R$)
                         </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          required
-                          value={differentAmount}
-                          onChange={(e) => setDifferentAmount(parseFloat(e.target.value) || 0)}
-                          className="w-full text-xs p-2 bg-white border border-slate-200 rounded-lg font-mono font-bold text-slate-900"
-                        />
+                        <div className="w-full bg-white border border-slate-200 rounded-lg">
+                          <CurrencyInput
+                            value={differentAmount}
+                            onChange={setDifferentAmount}
+                            placeholder="0,00"
+                            className="w-full text-xs p-2 bg-transparent font-mono font-bold text-slate-900 focus:outline-none"
+                          />
+                        </div>
                       </div>
 
                       {/* Diferença automática */}

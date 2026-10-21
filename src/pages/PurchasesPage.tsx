@@ -23,6 +23,7 @@ import {
   PaymentStatus,
 } from '../types/finance';
 import { formatCurrency } from '../utils/pricing';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 
 interface PurchasesPageProps {
   userId: string;
@@ -610,15 +611,21 @@ export const PurchasesPage: React.FC<PurchasesPageProps> = ({ userId }) => {
                   <label className="block font-semibold text-slate-700 mb-1">
                     Custo Total Pago/A Pagar (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={totalCost}
-                    onChange={(e) => setTotalCost(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white"
-                  />
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600">
+                    <CurrencyInput
+                      value={totalCost}
+                      onChange={(val) => {
+                        setTotalCost(val);
+                        if (numInstallments > 1) {
+                          setInstallments(
+                            generateInstallments(val, numInstallments, paymentStatus, dueDate, paymentMethod)
+                          );
+                        }
+                      }}
+                      placeholder="0,00"
+                      className="w-full p-2.5 bg-transparent font-mono font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1">

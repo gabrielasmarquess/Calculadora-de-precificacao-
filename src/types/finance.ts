@@ -157,18 +157,23 @@ export interface UserSession {
   id: string;
   userId: string;
   loginTime: string;
-  userAgent: string;
-  deviceType: string;
+  userAgent?: string;
+  deviceType: 'Computador' | 'Smartphone' | 'Tablet' | string;
   browser: string;
+  os?: string;
   isCurrentSession: boolean;
+  approxLocation?: string;
+  lastActive?: string;
 }
 
 export interface AccessLog {
   id: string;
   userId: string;
   timestamp: string;
-  action: 'login' | 'logout' | 'password_change' | 'import_data' | 'export_data';
+  action: 'login' | 'logout' | 'password_change' | 'import_data' | 'export_data' | '2fa_enabled' | '2fa_disabled' | 'session_terminated' | 'all_sessions_terminated' | 'sync';
   details: string;
+  device?: string;
+  ip?: string;
 }
 
 export interface UserProfile {
@@ -176,6 +181,7 @@ export interface UserProfile {
   email: string;
   name: string;
   companyName?: string;
+  twoFactorEnabled?: boolean;
   createdAt: string;
 }
 

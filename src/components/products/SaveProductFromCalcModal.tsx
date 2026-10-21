@@ -13,6 +13,7 @@ import {
 import { productsRepo } from '../../services/db';
 import { Product, Marketplace } from '../../types/finance';
 import { formatCurrency } from '../../utils/pricing';
+import { CurrencyInput } from '../common/CurrencyInput';
 
 interface SaveProductFromCalcModalProps {
   userId: string;
@@ -295,15 +296,14 @@ export const SaveProductFromCalcModal: React.FC<SaveProductFromCalcModalProps> =
               <label className="block font-semibold text-slate-700 mb-1">
                 Custo de Compra Habitual (R$)
               </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                value={cost}
-                onChange={(e) => setCost(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono font-bold text-slate-900"
-              />
+              <div className="w-full bg-white border border-slate-200 rounded-lg">
+                <CurrencyInput
+                  value={cost}
+                  onChange={setCost}
+                  placeholder="0,00"
+                  className="w-full p-2 bg-transparent font-mono font-bold text-slate-900 focus:outline-none"
+                />
+              </div>
               <span className="text-[10px] text-slate-400 block mt-0.5">
                 Vindo do custo do produto na calculadora.
               </span>
@@ -313,15 +313,14 @@ export const SaveProductFromCalcModal: React.FC<SaveProductFromCalcModalProps> =
               <label className="block font-semibold text-slate-700 mb-1">
                 Preço de Venda de Referência (R$)
               </label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                required
-                value={price}
-                onChange={(e) => setPrice(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono font-bold text-emerald-900"
-              />
+              <div className="w-full bg-white border border-slate-200 rounded-lg">
+                <CurrencyInput
+                  value={price}
+                  onChange={setPrice}
+                  placeholder="0,00"
+                  className="w-full p-2 bg-transparent font-mono font-bold text-emerald-900 focus:outline-none"
+                />
+              </div>
               <span className="text-[10px] text-slate-400 block mt-0.5">
                 Vindo do Preço Ideal calculado.
               </span>

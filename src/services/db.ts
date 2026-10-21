@@ -11,6 +11,7 @@ import {
   Product,
   TrajectoryMemory,
 } from '../types/finance';
+import { roundCents } from '../utils/currency';
 
 const STORAGE_KEY_PREFIX = 'lucraibr_db_';
 
@@ -34,6 +35,245 @@ export function subscribeToDB(callback: Listener): () => void {
   };
 }
 
+export type SyncStatus = 'synced' | 'syncing' | 'error';
+let currentSyncStatus: SyncStatus = 'synced';
+const syncListeners: Set<(status: SyncStatus) => void> = new Set();
+
+function emitSyncStatus(status: SyncStatus) {
+  currentSyncStatus = status;
+  syncListeners.forEach((fn) => {
+    try {
+      fn(status);
+    } catch (e) {
+      console.error('Sync listener error', e);
+    }
+  });
+}
+
+export function subscribeToSyncStatus(callback: (status: SyncStatus) => void): () => void {
+  syncListeners.add(callback);
+  callback(currentSyncStatus);
+  return () => {
+    syncListeners.delete(callback);
+  };
+}
+
+let activeSyncUserId: string | null = null;
+try {
+  const cachedUser = localStorage.getItem('lucraibr_auth_current_user');
+  if (cachedUser) {
+    activeSyncUserId = JSON.parse(cachedUser).id;
+  }
+} catch {
+  // Ignore
+}
+
+let pushTimeout: any = null;
+let currentLocalVersion = 0;
+
+export const syncService = {
+  getStatus(): SyncStatus {
+    return currentSyncStatus;
+  },
+
+  setActiveUser(userId: string) {
+    activeSyncUserId = userId;
+    this.initSync(userId);
+  },
+
+  async initSync(userId: string) {
+    activeSyncUserId = userId;
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
+
+    try {
+      emitSyncStatus('syncing');
+      initUserDatabase(userId);
+
+      const localProducts = getStorage<Product[]>(`products_${userId}`, []);
+      const localOrders = getStorage<Order[]>(`orders_${userId}`, []);
+      const localPurchases = getStorage<Purchase[]>(`purchases_${userId}`, []);
+      const localExpenses = getStorage<Expense[]>(`expenses_${userId}`, []);
+      const localTransfers = getStorage<TransferPaymentEntry[]>(`transfers_${userId}`, []);
+      const localCash = getStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+        userId,
+        amount: 0,
+        startDate: new Date().toISOString().split('T')[0],
+        updatedAt: new Date().toISOString(),
+      });
+      const localMemories = getStorage<TrajectoryMemory[]>(`trajectory_${userId}`, []);
+
+      const migrateRes = await fetch('/api/sync/migrate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          products: localProducts,
+          orders: localOrders,
+          purchases: localPurchases,
+          expenses: localExpenses,
+          transfers: localTransfers,
+          cashBalance: localCash,
+          memories: localMemories,
+        }),
+      });
+
+      if (migrateRes.ok) {
+        const data = await migrateRes.json();
+        currentLocalVersion = data.version;
+      }
+
+      await this.pull(userId);
+    } catch (err) {
+      console.warn('Initial cloud sync notice:', err);
+      emitSyncStatus('synced');
+    }
+  },
+
+  async pull(userId: string) {
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
+
+    try {
+      emitSyncStatus('syncing');
+      const res = await fetch('/api/sync', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        emitSyncStatus('error');
+        return;
+      }
+
+      const data = await res.json();
+      currentLocalVersion = data.version;
+
+      if (Array.isArray(data.products) && data.products.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `products_${userId}`, JSON.stringify(data.products));
+      }
+      if (Array.isArray(data.orders) && data.orders.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `orders_${userId}`, JSON.stringify(data.orders));
+      }
+      if (Array.isArray(data.purchases) && data.purchases.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `purchases_${userId}`, JSON.stringify(data.purchases));
+      }
+      if (Array.isArray(data.expenses) && data.expenses.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `expenses_${userId}`, JSON.stringify(data.expenses));
+      }
+      if (Array.isArray(data.transfers) && data.transfers.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `transfers_${userId}`, JSON.stringify(data.transfers));
+      }
+      if (data.cashBalance) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `cash_initial_${userId}`, JSON.stringify(data.cashBalance));
+      }
+      if (Array.isArray(data.memories) && data.memories.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `trajectory_${userId}`, JSON.stringify(data.memories));
+      }
+
+      emitChange();
+      emitSyncStatus('synced');
+    } catch (err) {
+      console.warn('Pull sync error:', err);
+      emitSyncStatus('error');
+    }
+  },
+
+  schedulePush(userId: string) {
+    if (pushTimeout) clearTimeout(pushTimeout);
+    emitSyncStatus('syncing');
+    pushTimeout = setTimeout(() => {
+      this.push(userId);
+    }, 450);
+  },
+
+  async push(userId: string) {
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) {
+      emitSyncStatus('synced');
+      return;
+    }
+
+    try {
+      const payload = {
+        products: getStorage<Product[]>(`products_${userId}`, []),
+        orders: getStorage<Order[]>(`orders_${userId}`, []),
+        purchases: getStorage<Purchase[]>(`purchases_${userId}`, []),
+        expenses: getStorage<Expense[]>(`expenses_${userId}`, []),
+        transfers: getStorage<TransferPaymentEntry[]>(`transfers_${userId}`, []),
+        cashBalance: getStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+          userId,
+          amount: 0,
+          startDate: new Date().toISOString().split('T')[0],
+          updatedAt: new Date().toISOString(),
+        }),
+        memories: getStorage<TrajectoryMemory[]>(`trajectory_${userId}`, []),
+      };
+
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        currentLocalVersion = data.version;
+        emitSyncStatus('synced');
+      } else {
+        emitSyncStatus('error');
+      }
+    } catch (err) {
+      console.warn('Push sync error:', err);
+      emitSyncStatus('error');
+    }
+  },
+
+  async checkRemoteChanges(userId: string) {
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch('/api/sync/version', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const { version } = await res.json();
+        if (version > currentLocalVersion) {
+          await this.pull(userId);
+        }
+      }
+    } catch {
+      // Background check silent fail
+    }
+  },
+};
+
+// Periodic polling every 3.5s and on window focus/tab switch for real-time sync between PC & phone
+if (typeof window !== 'undefined') {
+  setInterval(() => {
+    if (activeSyncUserId && document.visibilityState === 'visible') {
+      syncService.checkRemoteChanges(activeSyncUserId);
+    }
+  }, 3500);
+
+  window.addEventListener('visibilitychange', () => {
+    if (activeSyncUserId && document.visibilityState === 'visible') {
+      syncService.checkRemoteChanges(activeSyncUserId);
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if (activeSyncUserId) {
+      syncService.checkRemoteChanges(activeSyncUserId);
+    }
+  });
+}
+
 // Local storage helper with JSON parsing safety
 function getStorage<T>(key: string, defaultValue: T): T {
   try {
@@ -50,6 +290,11 @@ function setStorage<T>(key: string, value: T): void {
   try {
     localStorage.setItem(STORAGE_KEY_PREFIX + key, JSON.stringify(value));
     emitChange();
+
+    // Trigger cloud sync push
+    if (activeSyncUserId && !key.startsWith('logs_') && !key.startsWith('sessions_')) {
+      syncService.schedulePush(activeSyncUserId);
+    }
   } catch (err) {
     console.error(`Error writing ${key} to storage:`, err);
   }
@@ -930,17 +1175,17 @@ export function computeFinancialSummary(userId: string): FinancialSummary {
   const realizedProfit = confirmedTransfersAmount - confirmedOrdersProductCost - totalExpensesCashOutflow;
 
   return {
-    currentAvailableCash,
-    projectedCash,
-    totalSalesGross,
-    pendingTransfersAmount,
-    confirmedTransfersAmount,
+    currentAvailableCash: roundCents(currentAvailableCash),
+    projectedCash: roundCents(projectedCash),
+    totalSalesGross: roundCents(totalSalesGross),
+    pendingTransfersAmount: roundCents(pendingTransfersAmount),
+    confirmedTransfersAmount: roundCents(confirmedTransfersAmount),
     pendingProductsToBuyCount,
-    moneyNeededToBuyProducts,
-    accountsPayableAmount,
-    expensesPaidAmount: totalExpensesCashOutflow,
-    estimatedProfit,
-    realizedProfit,
+    moneyNeededToBuyProducts: roundCents(moneyNeededToBuyProducts),
+    accountsPayableAmount: roundCents(accountsPayableAmount),
+    expensesPaidAmount: roundCents(totalExpensesCashOutflow),
+    estimatedProfit: roundCents(estimatedProfit),
+    realizedProfit: roundCents(realizedProfit),
     hasIncompleteData,
   };
 }

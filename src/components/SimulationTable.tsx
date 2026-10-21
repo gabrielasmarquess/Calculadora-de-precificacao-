@@ -6,6 +6,8 @@ import {
   generateSimulationRows,
   formatCurrency,
   formatPercent,
+  parseCurrency,
+  roundCents,
 } from '../utils/pricing';
 
 interface SimulationTableProps {
@@ -19,8 +21,8 @@ export const SimulationTable: React.FC<SimulationTableProps> = ({ state }) => {
 
   const handleAddPrice = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const val = parseFloat(newPriceInput.replace(',', '.'));
-    if (!isNaN(val) && val > 0 && !pricesList.includes(val)) {
+    const val = parseCurrency(newPriceInput);
+    if (val > 0 && !pricesList.includes(val)) {
       const updated = [...pricesList, val].sort((a, b) => a - b);
       setPricesList(updated);
       setNewPriceInput('');
@@ -107,12 +109,14 @@ export const SimulationTable: React.FC<SimulationTableProps> = ({ state }) => {
                 </span>
                 <input
                   id="input-novo-preco-tabela"
-                  type="number"
-                  step={0.5}
-                  min={1}
-                  placeholder="Valor"
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="0,00"
                   value={newPriceInput}
-                  onChange={(e) => setNewPriceInput(e.target.value)}
+                  onChange={(e) => {
+                    const clean = e.target.value.replace(/\./g, ',');
+                    setNewPriceInput(clean);
+                  }}
                   className="w-24 pl-7 pr-2 py-1 text-xs font-bold border border-emerald-400 rounded-lg focus:outline-none focus:ring-1 focus:ring-emerald-600 bg-white"
                   autoFocus
                 />

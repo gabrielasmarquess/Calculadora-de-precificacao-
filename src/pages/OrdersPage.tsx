@@ -26,7 +26,8 @@ import {
   TransferStatus,
   Product,
 } from '../types/finance';
-import { formatCurrency } from '../utils/pricing';
+import { formatCurrency, roundCents } from '../utils/pricing';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 
 interface OrdersPageProps {
   userId: string;
@@ -249,11 +250,11 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
 
   // Auto calculate estimated gross and transfer when prices change
   const calculatedGross = useMemo(() => {
-    return items.reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0);
+    return roundCents(items.reduce((acc, curr) => acc + (curr.quantity * curr.unitPrice), 0));
   }, [items]);
 
   const calculatedTotalCost = useMemo(() => {
-    return items.reduce((acc, curr) => acc + (curr.quantity * curr.unitCost), 0);
+    return roundCents(items.reduce((acc, curr) => acc + (curr.quantity * curr.unitCost), 0));
   }, [items]);
 
   const handleAddItem = () => {
@@ -840,38 +841,25 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
                         </div>
                         <div>
                           <label className="text-[10px] text-slate-500 block">Preço Venda Unit. (R$)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={item.unitPrice}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.id,
-                                'unitPrice',
-                                Math.max(0, parseFloat(e.target.value) || 0)
-                              )
-                            }
-                            className="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
-                          />
+                          <div className="w-full bg-white border border-slate-200 rounded-lg">
+                            <CurrencyInput
+                              value={item.unitPrice}
+                              onChange={(val) => handleUpdateItem(item.id, 'unitPrice', val)}
+                              placeholder="0,00"
+                              className="w-full p-1.5 bg-transparent rounded-lg text-xs font-mono focus:outline-none"
+                            />
+                          </div>
                         </div>
                         <div>
                           <label className="text-[10px] text-slate-500 block">Custo Unit. Fornecedor (R$)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="0.00 se pendente"
-                            value={item.unitCost}
-                            onChange={(e) =>
-                              handleUpdateItem(
-                                item.id,
-                                'unitCost',
-                                Math.max(0, parseFloat(e.target.value) || 0)
-                              )
-                            }
-                            className="w-full p-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono"
-                          />
+                          <div className="w-full bg-white border border-slate-200 rounded-lg">
+                            <CurrencyInput
+                              value={item.unitCost}
+                              onChange={(val) => handleUpdateItem(item.id, 'unitCost', val)}
+                              placeholder="0,00"
+                              className="w-full p-1.5 bg-transparent rounded-lg text-xs font-mono focus:outline-none"
+                            />
+                          </div>
                         </div>
                         <div className="flex items-center pt-3">
                           <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-700 font-medium">
@@ -907,14 +895,14 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Taxas da Plataforma (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={knownFeesAmount}
-                    onChange={(e) => setKnownFeesAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                  />
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600">
+                    <CurrencyInput
+                      value={knownFeesAmount}
+                      onChange={setKnownFeesAmount}
+                      placeholder="0,00"
+                      className="w-full text-xs p-2.5 bg-transparent font-mono focus:outline-none"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -930,14 +918,14 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
                       Calcular
                     </button>
                   </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={estimatedTransferAmount}
-                    onChange={(e) => setEstimatedTransferAmount(parseFloat(e.target.value) || 0)}
-                    className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-emerald-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
-                  />
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600">
+                    <CurrencyInput
+                      value={estimatedTransferAmount}
+                      onChange={setEstimatedTransferAmount}
+                      placeholder="0,00"
+                      className="w-full text-xs p-2.5 bg-transparent font-mono font-bold text-emerald-900 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -18,57 +18,25 @@ export const DEFAULT_SIMULATION_PRICES = [
   15, 20, 25, 30, 35, 40, 50, 60, 80, 100, 150, 200, 250, 300,
 ];
 
-/**
- * Formata um número em Moeda Brasileira (R$ 0,00)
- */
-export function formatCurrency(value: number): string {
-  if (isNaN(value) || !isFinite(value)) {
-    return 'R$ 0,00';
-  }
-  const isNegative = value < -0.00001;
-  const absValue = Math.abs(value);
-  const formatted = absValue.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return isNegative ? `-R$ ${formatted}` : `R$ ${formatted}`;
-}
-
-/**
- * Formata um número em Percentual Brasileiro (0,00%)
- */
-export function formatPercent(value: number, includeSign = false): string {
-  if (isNaN(value) || !isFinite(value)) {
-    return '0,00%';
-  }
-  const formatted = value.toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  if (includeSign && value > 0.0001) {
-    return `+${formatted}%`;
-  }
-  return `${formatted}%`;
-}
-
-/**
- * Formata pontos percentuais (ex: +3,06 ou -5,20 pontos percentuais)
- */
-export function formatPoints(value: number): string {
-  if (isNaN(value) || !isFinite(value)) {
-    return '0,00';
-  }
-  const formatted = Math.abs(value).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  if (value > 0.0001) {
-    return `+${formatted}`;
-  } else if (value < -0.0001) {
-    return `-${formatted}`;
-  }
-  return formatted;
-}
+export {
+  formatCurrency,
+  formatCurrencyRaw,
+  formatPercent,
+  formatPoints,
+  parseCurrency,
+  roundCents,
+  toCents,
+  fromCents,
+  safeAdd,
+  safeSubtract,
+  safeMultiply,
+} from './currency';
+import {
+  formatCurrency,
+  formatPercent,
+  formatPoints,
+  roundCents,
+} from './currency';
 
 /**
  * Avalia a situação e gera mensagens descritivas para a venda
@@ -177,13 +145,13 @@ export function calculateSaleForPrice(
     };
   }
 
-  const percentFeesValue = price * (totalPercentFeesPct / 100);
-  const fixedFeesValue = state.fixedFee + state.otherFixedFees;
-  const totalFees = percentFeesValue + fixedFeesValue;
-  const totalCost = state.productCost + state.otherCosts;
-  const netProfit = price - totalFees - totalCost;
-  const netMarginPct = (netProfit / price) * 100;
-  const marginDiffPct = netMarginPct - state.minAcceptableMarginPct;
+  const percentFeesValue = roundCents(price * (totalPercentFeesPct / 100));
+  const fixedFeesValue = roundCents(state.fixedFee + state.otherFixedFees);
+  const totalFees = roundCents(percentFeesValue + fixedFeesValue);
+  const totalCost = roundCents(state.productCost + state.otherCosts);
+  const netProfit = roundCents(price - totalFees - totalCost);
+  const netMarginPct = price > 0 ? roundCents(((netProfit / price) * 100)) : 0;
+  const marginDiffPct = roundCents(netMarginPct - state.minAcceptableMarginPct);
 
   const evaluation = evaluateSaleStatus(netProfit, netMarginPct, state.minAcceptableMarginPct);
 
@@ -241,7 +209,7 @@ export function calculateIdealPrice(state: PricingState): {
 
     const price = numerator / denominator;
     return {
-      idealPrice: isFinite(price) && !isNaN(price) ? price : 0,
+      idealPrice: isFinite(price) && !isNaN(price) ? roundCents(price) : 0,
       isValid: true,
     };
   } else {
@@ -260,7 +228,7 @@ export function calculateIdealPrice(state: PricingState): {
 
     const price = totalFixedCosts / denominator;
     return {
-      idealPrice: isFinite(price) && !isNaN(price) ? price : 0,
+      idealPrice: isFinite(price) && !isNaN(price) ? roundCents(price) : 0,
       isValid: true,
     };
   }
@@ -291,7 +259,7 @@ export function calculateMinRequiredPrice(state: PricingState): {
 
   const price = totalFixedCosts / denominator;
   return {
-    minPrice: isFinite(price) && !isNaN(price) ? price : 0,
+    minPrice: isFinite(price) && !isNaN(price) ? roundCents(price) : 0,
     isValid: true,
   };
 }

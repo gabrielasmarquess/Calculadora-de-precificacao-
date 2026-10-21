@@ -1,0 +1,62 @@
+{
+  "users": [
+    {
+      "id": "usr_owner_default",
+      "email": "gabrielasousamarquess2@gmail.com",
+      "name": "Gabriela Marques",
+      "companyName": "LucraiBR Vendas Online",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T00:51:29.038Z"
+    }
+  ],
+  "sessions": [
+    {
+      "id": "sess_1792543892681_cb4cb138",
+      "userId": "usr_owner_default",
+      "token": "tok_08917b31c54e9f00bf3be2df1b79cb3ac19e8a376b3aecd1",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T00:51:32.681Z",
+      "lastActive": "2026-10-21T00:51:42.591Z",
+      "isActive": true
+    }
+  ],
+  "pending2FACodes": [
+    {
+      "id": "action_e671b0821847bd53970bc7c732f9a87c",
+      "userId": "usr_owner_default",
+      "code": "885803",
+      "expiresAt": 1792544198934,
+      "used": true
+    }
+  ],
+  "securityLogs": [
+    {
+      "id": "log_seed_1",
+      "userId": "usr_owner_default",
+      "timestamp": "2026-10-21T00:51:29.038Z",
+      "action": "login",
+      "details": "Conta inicial Gabriela Marques pronta para sincronização na nuvem",
+      "device": "Servidor Nuvem LucraiBR"
+    },
+    {
+      "id": "log_1792543892681",
+      "userId": "usr_owner_default",
+      "timestamp": "2026-10-21T00:51:32.681Z",
+      "action": "login",
+      "details": "Login efetuado no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    }
+  ],
+  "products": {},
+  "orders": {},
+  "purchases": {},
+  "expenses": {},
+  "transfers": {},
+  "cashBalances": {},
+  "memories": {},
+  "versions": {}
+}

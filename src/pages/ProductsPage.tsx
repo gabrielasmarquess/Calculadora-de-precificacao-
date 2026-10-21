@@ -24,6 +24,7 @@ import {
 import { productsRepo, logsRepo } from '../services/db';
 import { Product, Marketplace } from '../types/finance';
 import { formatCurrency } from '../utils/pricing';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 
 interface ProductsPageProps {
   userId: string;
@@ -591,15 +592,14 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">
                     Custo de Compra Habitual (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={habitualCost}
-                    onChange={(e) => setHabitualCost(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono font-bold text-slate-900"
-                  />
+                  <div className="w-full bg-white border border-slate-200 rounded-lg">
+                    <CurrencyInput
+                      value={habitualCost}
+                      onChange={setHabitualCost}
+                      placeholder="0,00"
+                      className="w-full p-2 bg-transparent font-mono font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
                   <span className="text-[10px] text-slate-400 block mt-0.5">
                     Preço médio que você paga ao fornecedor.
                   </span>
@@ -609,15 +609,14 @@ export const ProductsPage: React.FC<ProductsPageProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">
                     Preço de Venda de Referência (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={referencePrice}
-                    onChange={(e) => setReferencePrice(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full p-2 bg-white border border-slate-200 rounded-lg font-mono font-bold text-emerald-900"
-                  />
+                  <div className="w-full bg-white border border-slate-200 rounded-lg">
+                    <CurrencyInput
+                      value={referencePrice}
+                      onChange={setReferencePrice}
+                      placeholder="0,00"
+                      className="w-full p-2 bg-transparent font-mono font-bold text-emerald-900 focus:outline-none"
+                    />
+                  </div>
                   <span className="text-[10px] text-slate-400 block mt-0.5">
                     Preço sugerido para anúncios nos marketplaces.
                   </span>

@@ -3,6 +3,7 @@ import { Target, DollarSign, Percent, ShieldCheck } from 'lucide-react';
 import { TargetType } from '../types';
 import { FormField } from './FormField';
 import { InfoTooltip } from './InfoTooltip';
+import { CurrencyInput } from './common/CurrencyInput';
 
 interface TargetSectionProps {
   targetType: TargetType;
@@ -136,22 +137,16 @@ export const TargetSection: React.FC<TargetSectionProps> = ({
           {/* Campo numérico editável */}
           <div className="w-32">
             <div className="relative flex items-center rounded-lg border border-emerald-300 bg-white shadow-xs focus-within:ring-2 focus-within:ring-emerald-600 focus-within:border-emerald-600">
-              <input
+              <CurrencyInput
                 id="input-margem-minima"
-                type="number"
-                step={1}
+                value={minAcceptableMarginPct}
+                onChange={onChangeMinAcceptableMarginPct}
+                suffix="%"
                 min={0}
                 max={95}
-                value={minAcceptableMarginPct}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) onChangeMinAcceptableMarginPct(val);
-                }}
-                className="w-full py-2 pl-3 pr-7 text-sm font-bold text-emerald-950 text-right focus:outline-none"
+                placeholder="0"
+                className="w-full py-2 pl-3 pr-1 text-sm font-bold text-emerald-950 text-right bg-transparent focus:outline-none"
               />
-              <span className="absolute right-2.5 text-xs font-bold text-emerald-800 select-none">
-                %
-              </span>
             </div>
           </div>
         </div>

@@ -7,6 +7,7 @@ import {
   formatPercent,
   formatPoints,
 } from '../utils/pricing';
+import { CurrencyInput } from './common/CurrencyInput';
 
 interface SimulatorSectionProps {
   state: PricingState;
@@ -83,19 +84,11 @@ export const SimulatorSection: React.FC<SimulatorSectionProps> = ({ state }) => 
           Digite o Preço de Venda
         </label>
         <div className="relative flex items-center rounded-xl border border-emerald-400/90 bg-emerald-50/20 shadow-xs focus-within:ring-2 focus-within:ring-emerald-600">
-          <span className="pl-4 pr-1 text-base font-bold text-emerald-900 select-none">
-            R$
-          </span>
-          <input
+          <CurrencyInput
             id="input-simulador-preco"
-            type="number"
-            step={1}
-            min={0}
-            value={testPrice === 0 ? '' : testPrice}
-            onChange={(e) => {
-              const val = parseFloat(e.target.value.replace(',', '.'));
-              setTestPrice(isNaN(val) ? 0 : val);
-            }}
+            prefix="R$"
+            value={testPrice}
+            onChange={setTestPrice}
             placeholder="0,00"
             className="w-full py-3 px-2 text-xl font-extrabold text-emerald-950 bg-transparent rounded-xl focus:outline-none"
           />

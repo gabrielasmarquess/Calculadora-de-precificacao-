@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { authService, subscribeToAuth } from './services/auth';
-import { subscribeToDB, computeFinancialSummary, ordersRepo, purchasesRepo } from './services/db';
+import { subscribeToDB, computeFinancialSummary, ordersRepo, purchasesRepo, syncService } from './services/db';
 import { UserProfile } from './types/finance';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar, NavSection } from './components/layout/Sidebar';
@@ -47,10 +47,23 @@ export default function App() {
   const [dbVersion, setDbVersion] = useState(0);
   const [selectedProductForSale, setSelectedProductForSale] = useState<Product | null>(null);
 
+  // Check server session on mount and initialize sync
+  useEffect(() => {
+    authService.checkServerSession().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        syncService.setActiveUser(user.id);
+      }
+    });
+  }, []);
+
   // Subscribe to auth state
   useEffect(() => {
     return subscribeToAuth((user) => {
       setCurrentUser(user);
+      if (user) {
+        syncService.setActiveUser(user.id);
+      }
     });
   }, []);
 
@@ -62,7 +75,11 @@ export default function App() {
   }, []);
 
   const refreshUser = useCallback(() => {
-    setCurrentUser(authService.getCurrentUser());
+    const user = authService.getCurrentUser();
+    setCurrentUser(user);
+    if (user) {
+      syncService.setActiveUser(user.id);
+    }
   }, []);
 
   // Financial summary computation

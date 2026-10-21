@@ -25,6 +25,7 @@ import {
   PaymentStatus,
 } from '../types/finance';
 import { formatCurrency } from '../utils/pricing';
+import { CurrencyInput } from '../components/common/CurrencyInput';
 
 const DEFAULT_CATEGORIES: ExpenseCategory[] = [
   'Embalagens e Caixas',
@@ -614,15 +615,21 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ userId }) => {
                   <label className="block font-semibold text-slate-700 mb-1">
                     Valor (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={amount}
-                    onChange={(e) => setAmount(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900 focus:bg-white"
-                  />
+                  <div className="w-full bg-slate-50 border border-slate-200 rounded-xl focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600">
+                    <CurrencyInput
+                      value={amount}
+                      onChange={(val) => {
+                        setAmount(val);
+                        if (numInstallments > 1) {
+                          setInstallments(
+                            generateInstallments(val, numInstallments, paymentStatus, dueDate, paymentMethod)
+                          );
+                        }
+                      }}
+                      placeholder="0,00"
+                      className="w-full p-2.5 bg-transparent font-mono font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
