@@ -359,6 +359,20 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
+  // Trust reverse proxy (Google Cloud Run / Nginx / load balancers)
+  app.set('trust proxy', 1);
+
+  // Enable CORS for mobile browsers, PWAs, and published domains
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   app.use(express.json({ limit: '25mb' }));
 
   // API Health Check
@@ -491,7 +505,8 @@ async function startServer() {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+    const rawXff = (req.headers['x-forwarded-for'] as string) || '';
+    const clientIp = rawXff ? rawXff.split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
     const rateLimitKey = `${cleanEmail}_${clientIp}`;
 
     // 1. Check brute force rate limiting
@@ -583,17 +598,26 @@ async function startServer() {
     // 5. Successful login: Create session
     const token = 'tok_' + crypto.randomBytes(24).toString('hex');
     const userAgent = req.headers['user-agent'] || '';
-    const { deviceType, browser, os, approxLocation } = parseDeviceInfo(userAgent, clientIp);
+    const parsed = parseDeviceInfo(userAgent, clientIp);
+    let resolvedDeviceType = parsed.deviceType;
+    if (req.body.deviceType) {
+      const lower = String(req.body.deviceType).toLowerCase();
+      if (lower.includes('cel') || lower.includes('smart') || lower.includes('mob')) {
+        resolvedDeviceType = 'Smartphone';
+      } else if (lower.includes('tab')) {
+        resolvedDeviceType = 'Tablet';
+      }
+    }
 
     const session: SessionRecord = {
       id: 'sess_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
       userId: user.id,
       token,
-      deviceType,
-      browser: `${browser} (${os})`,
-      os,
+      deviceType: resolvedDeviceType,
+      browser: `${parsed.browser} (${parsed.os})`,
+      os: parsed.os,
       ip: clientIp,
-      approxLocation,
+      approxLocation: parsed.approxLocation,
       loginTime: new Date().toISOString(),
       lastActive: new Date().toISOString(),
       isActive: true,
@@ -607,8 +631,8 @@ async function startServer() {
       userEmail: user.email,
       timestamp: new Date().toISOString(),
       action: 'login',
-      details: `Login autorizado com sucesso no ${deviceType} (${browser})`,
-      device: `${deviceType} - ${browser}`,
+      details: `Login autorizado com sucesso no ${resolvedDeviceType} (${parsed.browser})`,
+      device: `${resolvedDeviceType} - ${parsed.browser}`,
       ip: clientIp,
     });
 
@@ -1411,14 +1435,27 @@ async function startServer() {
   // ==========================================
   // FRONTEND CLIENT SERVING
   // ==========================================
-  if (process.env.NODE_ENV === 'production') {
-    const distPath = path.resolve(__dirname, 'dist');
+  const distPath = path.resolve(__dirname, 'dist');
+  const indexHtmlExists = fs.existsSync(path.join(distPath, 'index.html'));
+  const isCloudRun = !!process.env.K_SERVICE || !!process.env.K_REVISION;
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.npm_lifecycle_event === 'start' ||
+    isCloudRun ||
+    (indexHtmlExists && process.env.npm_lifecycle_event !== 'dev');
+
+  if (isProduction && indexHtmlExists) {
+    console.log('LucraiBR: Servindo arquivos estáticos de produção a partir de /dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      // Never send index.html for API requests
+      if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: `Rota de API não encontrada: ${req.method} ${req.path}` });
+      }
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   } else {
-    // Mount Vite dev server middleware
+    // Mount Vite dev server middleware in local development
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

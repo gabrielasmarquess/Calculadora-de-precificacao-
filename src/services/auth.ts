@@ -24,6 +24,65 @@ export function subscribeToAuth(callback: AuthListener): () => void {
   };
 }
 
+interface SafeParsedResponse<T = any> {
+  ok: boolean;
+  status: number;
+  data: T | null;
+  rawText: string;
+}
+
+async function parseResponseSafely<T = any>(res: Response): Promise<SafeParsedResponse<T>> {
+  let rawText = '';
+  try {
+    rawText = await res.text();
+  } catch {
+    rawText = '';
+  }
+
+  let data: T | null = null;
+  const contentType = res.headers.get('content-type') || '';
+  if (rawText && (contentType.includes('application/json') || rawText.trim().startsWith('{') || rawText.trim().startsWith('['))) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = null;
+    }
+  }
+
+  return { ok: res.ok, status: res.status, data, rawText };
+}
+
+function resolveErrorMessage(
+  parsed: SafeParsedResponse,
+  fallbackMessage: string
+): string {
+  if (parsed.data && typeof parsed.data === 'object') {
+    if (parsed.data.error && typeof parsed.data.error === 'string') return parsed.data.error;
+    if (parsed.data.message && typeof parsed.data.message === 'string') return parsed.data.message;
+  }
+
+  if (parsed.status === 404) {
+    return 'Serviço de autenticação ou rota não encontrada (HTTP 404). É necessário publicar uma nova versão da aplicação.';
+  }
+  if (parsed.status === 429) {
+    return 'Muitas tentativas de login. Conta temporariamente bloqueada por 15 minutos por segurança.';
+  }
+  if (parsed.status === 401) {
+    return 'Credenciais de acesso incorretas ou sessão expirada no servidor.';
+  }
+  if (parsed.status === 403) {
+    return 'Acesso negado ou conta suspensa pelo administrador (HTTP 403).';
+  }
+  if (parsed.status === 502 || parsed.status === 503 || parsed.status === 504) {
+    return `O servidor backend está iniciando ou temporariamente indisponível (HTTP ${parsed.status}). Aguarde alguns instantes.`;
+  }
+  if (parsed.status >= 500) {
+    return `Erro interno do servidor backend (HTTP ${parsed.status}).`;
+  }
+
+  return fallbackMessage;
+}
+
 export const authService = {
   getToken(): string | null {
     try {
@@ -60,9 +119,10 @@ export const authService = {
         },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const user: UserProfile = data.user;
+      const parsed = await parseResponseSafely<{ user: UserProfile }>(res);
+
+      if (parsed.ok && parsed.data?.user) {
+        const user: UserProfile = parsed.data.user;
         localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
         emitAuthChange(user);
         return user;
@@ -92,35 +152,62 @@ export const authService = {
     expiresInMinutes?: number;
     error?: string;
   }> {
+    const isMobile = typeof navigator !== 'undefined' && /mobile|iphone|ipod|android/i.test(navigator.userAgent);
+    const isTablet = typeof navigator !== 'undefined' && /tablet|ipad/i.test(navigator.userAgent);
+    const deviceType = isTablet ? 'Tablet' : isMobile ? 'Smartphone' : 'Computador';
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, deviceType }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Falha ao realizar login' };
-      }
+      const parsed = await parseResponseSafely<{
+        success?: boolean;
+        token?: string;
+        user?: UserProfile;
+        requires2FA?: boolean;
+        tempToken?: string;
+        verificationCodeHint?: string;
+        expiresInMinutes?: number;
+        error?: string;
+      }>(res);
 
-      if (data.requires2FA) {
+      if (!parsed.ok || !parsed.data) {
         return {
-          success: true,
-          requires2FA: true,
-          tempToken: data.tempToken,
-          verificationCodeHint: data.verificationCodeHint,
-          expiresInMinutes: data.expiresInMinutes,
+          success: false,
+          error: resolveErrorMessage(parsed, 'Falha ao realizar login no servidor.'),
         };
       }
 
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      emitAuthChange(data.user);
-      return { success: true };
-    } catch (err) {
-      console.error('Login error:', err);
-      return { success: false, error: 'Erro de conexão com o servidor de autenticação.' };
+      if (parsed.data.requires2FA) {
+        return {
+          success: true,
+          requires2FA: true,
+          tempToken: parsed.data.tempToken,
+          verificationCodeHint: parsed.data.verificationCodeHint,
+          expiresInMinutes: parsed.data.expiresInMinutes,
+        };
+      }
+
+      if (parsed.data.token && parsed.data.user) {
+        localStorage.setItem(AUTH_TOKEN_KEY, parsed.data.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(parsed.data.user));
+        emitAuthChange(parsed.data.user);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Resposta do servidor incompleta.' };
+    } catch (err: any) {
+      console.error('Login network error:', err);
+      const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+      return {
+        success: false,
+        error: isOffline
+          ? 'Sem conexão com a internet no celular. Verifique o sinal Wi-Fi ou dados móveis.'
+          : `Erro de comunicação com o servidor: ${err?.message || 'Falha na rede'}.`,
+      };
     }
   },
 
@@ -135,17 +222,21 @@ export const authService = {
         body: JSON.stringify({ tempToken, code }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Código incorreto ou expirado' };
+      const parsed = await parseResponseSafely<{ token?: string; user?: UserProfile }>(res);
+      if (!parsed.ok || !parsed.data) {
+        return { success: false, error: resolveErrorMessage(parsed, 'Código incorreto ou expirado.') };
       }
 
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      emitAuthChange(data.user);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Erro ao validar código no servidor.' };
+      if (parsed.data.token && parsed.data.user) {
+        localStorage.setItem(AUTH_TOKEN_KEY, parsed.data.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(parsed.data.user));
+        emitAuthChange(parsed.data.user);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Falha ao confirmar autenticação em duas etapas.' };
+    } catch (err: any) {
+      return { success: false, error: `Erro ao validar código no servidor: ${err?.message || 'Falha de rede'}` };
     }
   },
 
@@ -155,24 +246,32 @@ export const authService = {
     companyName?: string,
     password?: string
   ): Promise<{ success: boolean; error?: string }> {
+    const isMobile = typeof navigator !== 'undefined' && /mobile|iphone|ipod|android/i.test(navigator.userAgent);
+    const isTablet = typeof navigator !== 'undefined' && /tablet|ipad/i.test(navigator.userAgent);
+    const deviceType = isTablet ? 'Tablet' : isMobile ? 'Smartphone' : 'Computador';
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, companyName, password }),
+        body: JSON.stringify({ name, email, companyName, password, deviceType }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Falha ao registrar conta' };
+      const parsed = await parseResponseSafely<{ token?: string; user?: UserProfile }>(res);
+      if (!parsed.ok || !parsed.data) {
+        return { success: false, error: resolveErrorMessage(parsed, 'Falha ao registrar conta.') };
       }
 
-      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      localStorage.setItem(AUTH_USER_KEY, JSON.stringify(data.user));
-      emitAuthChange(data.user);
-      return { success: true };
-    } catch (err) {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+      if (parsed.data.token && parsed.data.user) {
+        localStorage.setItem(AUTH_TOKEN_KEY, parsed.data.token);
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(parsed.data.user));
+        emitAuthChange(parsed.data.user);
+        return { success: true };
+      }
+
+      return { success: false, error: 'Registro não concluído com sucesso.' };
+    } catch (err: any) {
+      return { success: false, error: `Erro de comunicação ao registrar: ${err?.message || 'Falha de rede'}` };
     }
   },
 
@@ -190,18 +289,25 @@ export const authService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Erro ao solicitar recuperação.' };
+
+      const parsed = await parseResponseSafely<{
+        resetToken?: string;
+        codeHint?: string;
+        expiresInMinutes?: number;
+      }>(res);
+
+      if (!parsed.ok || !parsed.data) {
+        return { success: false, error: resolveErrorMessage(parsed, 'Erro ao solicitar recuperação.') };
       }
+
       return {
         success: true,
-        resetToken: data.resetToken,
-        codeHint: data.codeHint,
-        expiresInMinutes: data.expiresInMinutes,
+        resetToken: parsed.data.resetToken,
+        codeHint: parsed.data.codeHint,
+        expiresInMinutes: parsed.data.expiresInMinutes,
       };
-    } catch {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+    } catch (err: any) {
+      return { success: false, error: `Erro de comunicação: ${err?.message || 'Falha de rede'}` };
     }
   },
 
@@ -217,13 +323,15 @@ export const authService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resetToken, code, newPassword }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Erro ao redefinir senha.' };
+
+      const parsed = await parseResponseSafely<{ message?: string }>(res);
+      if (!parsed.ok || !parsed.data) {
+        return { success: false, error: resolveErrorMessage(parsed, 'Erro ao redefinir senha.') };
       }
-      return { success: true, message: data.message };
-    } catch {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+
+      return { success: true, message: parsed.data.message };
+    } catch (err: any) {
+      return { success: false, error: `Erro de comunicação: ${err?.message || 'Falha de rede'}` };
     }
   },
 
@@ -481,11 +589,11 @@ export const authService = {
         },
         body: JSON.stringify({ status }),
       });
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error || 'Erro ao alterar status.' };
-      return { success: true, message: data.message };
-    } catch {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+      const parsed = await parseResponseSafely<{ message?: string }>(res);
+      if (!parsed.ok || !parsed.data) return { success: false, error: resolveErrorMessage(parsed, 'Erro ao alterar status.') };
+      return { success: true, message: parsed.data.message };
+    } catch (err: any) {
+      return { success: false, error: `Erro de conexão: ${err?.message || 'Falha na rede'}` };
     }
   },
 
@@ -500,11 +608,11 @@ export const authService = {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
-      return { success: true, terminatedCount: data.terminatedCount };
-    } catch {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+      const parsed = await parseResponseSafely<{ terminatedCount?: number }>(res);
+      if (!parsed.ok || !parsed.data) return { success: false, error: resolveErrorMessage(parsed, 'Erro ao desconectar sessões.') };
+      return { success: true, terminatedCount: parsed.data.terminatedCount };
+    } catch (err: any) {
+      return { success: false, error: `Erro de conexão: ${err?.message || 'Falha na rede'}` };
     }
   },
 
@@ -517,11 +625,11 @@ export const authService = {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      if (!res.ok) return { success: false, error: data.error };
+      const parsed = await parseResponseSafely(res);
+      if (!parsed.ok) return { success: false, error: resolveErrorMessage(parsed, 'Erro ao encerrar sessão.') };
       return { success: true };
-    } catch {
-      return { success: false, error: 'Erro de conexão com o servidor.' };
+    } catch (err: any) {
+      return { success: false, error: `Erro de conexão: ${err?.message || 'Falha na rede'}` };
     }
   },
 
