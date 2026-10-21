@@ -22,6 +22,7 @@ import { CashFlowPage } from './pages/CashFlowPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ImportPage } from './pages/ImportPage';
 import { AccountPage } from './pages/AccountPage';
+import { AdminPage } from './pages/AdminPage';
 import { productsRepo } from './services/db';
 import { Product } from './types/finance';
 
@@ -36,6 +37,7 @@ const sectionTitles: Record<NavSection, string> = {
   expenses: 'Despesas Operacionais',
   import: 'Importação de Planilhas',
   account: 'Minha Conta & Segurança',
+  admin: 'Painel Administrativo do Sistema',
 };
 
 export default function App() {
@@ -133,6 +135,7 @@ export default function App() {
         pendingTransfersCount={pendingTransfersCount}
         pendingPurchasesCount={pendingPurchasesCount}
         productsCount={productsCount}
+        isAdmin={currentUser.role === 'admin'}
       />
 
       {/* 2. Main Layout Area */}
@@ -210,6 +213,10 @@ export default function App() {
               onLogout={handleLogout}
               onProfileUpdated={refreshUser}
             />
+          )}
+
+          {currentSection === 'admin' && currentUser.role === 'admin' && (
+            <AdminPage currentUser={currentUser} />
           )}
         </main>
       </div>

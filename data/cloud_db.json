@@ -6,7 +6,199 @@
       "name": "Gabriela Marques",
       "companyName": "LucraiBR Vendas Online",
       "twoFactorEnabled": false,
-      "createdAt": "2026-10-21T00:51:29.038Z"
+      "createdAt": "2026-10-21T00:51:29.038Z",
+      "role": "admin",
+      "status": "active",
+      "passwordHash": "958651e6a300f92398afd3ce51873bad:9d94c0fa492f3ececcd42cee5a1179f60ef10e50f275769f46eebbc18047f15ab79ed919b0948ccf27bbe93a8df2681b44c4a9663543538af2f9358593c6f22c",
+      "lastLoginAt": "2026-10-21T20:51:18.046Z"
+    },
+    {
+      "id": "usr_1792615328509_052440",
+      "name": "Vendedor Alpha",
+      "email": "test_user_a_1792615328503@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "3700adf1f25fab8202c1343c4b0b4e3fec706d57cad574086467b8b3ddf273ec",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:08.509Z",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "id": "usr_1792615328531_eb9406",
+      "name": "Vendedor Beta",
+      "email": "test_user_b_1792615328529@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "e80cd14143fc9d96441567a69642d7d12893ba3b9fa0a80edc0153950b59e459",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:08.531Z",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "id": "usr_1792615328606_ae2466",
+      "name": "Vítima Força Bruta",
+      "email": "brute_1792615328602@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "f383f45764ee35e2301727b98afed9be170a0a664e633ae4682e60f65cbfeec1",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:08.606Z",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "id": "usr_1792615328626_6986aa",
+      "name": "Usuário Recuperação",
+      "email": "recovery_1792615328624@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "0ecbee4e1bfef4a1a802236c1030cc8d3c4ca95d1bf7c3ce5a9780e48cfd4014",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:08.626Z",
+      "role": "user",
+      "status": "active"
+    },
+    {
+      "id": "usr_1792615335200_37bb79",
+      "name": "Vendedor Alpha",
+      "email": "test_user_a_1792615335192@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "dd89007bc7ef99859a2a307988b425d0:6e65faf15aa9e4fd59af452d4a460b71b6a9bf6843b9dc29fd5ccc8ed39c64e64d6ab9f8f594911ec108e212f0cacbc0e688e4ad023c6a941616387c0b3cee20",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:15.207Z",
+      "lastLoginAt": "2026-10-21T20:42:15.220Z"
+    },
+    {
+      "id": "usr_1792615335239_598722",
+      "name": "Vendedor Beta",
+      "email": "test_user_b_1792615335236@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "9409d55007b2ac8a43563d3ae0535517:94266eb74b731c8ba2e3e3fa5f5442278961172630a3065e57aa3385847fbde147780b6021391d8363bee68db38a12e33f9fa3b4fcec9aa0169d2e5fb2562619",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:15.248Z",
+      "lastLoginAt": "2026-10-21T20:42:15.248Z"
+    },
+    {
+      "id": "usr_1792615335280_0e26ea",
+      "name": "Vítima Força Bruta",
+      "email": "brute_1792615335279@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "4232ea1896464d2f1a8c71851f41f46d:f4a34e3efa2577e793d3006496fac3bac4ec8e44d6e23f487962193ce0d91e625670f4b67729b2f60c64b1c18748e907526f8cd4ba0320f56d6aa28294abb88a",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:15.288Z",
+      "lastLoginAt": "2026-10-21T20:42:15.288Z"
+    },
+    {
+      "id": "usr_1792615335344_791263",
+      "name": "Usuário Recuperação",
+      "email": "recovery_1792615335343@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "7af1065a8b8c0679f133bd851eb3a9de:ed5cd6b4c4d591a47fd98e49195d8cada5e129481602f97c289c7a47700c10c66653b34ae5fc16f10398e363ec957f879e6bf470e0218b3762e7debe043fb4d6",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:42:15.352Z",
+      "lastLoginAt": "2026-10-21T20:42:15.352Z"
+    },
+    {
+      "id": "usr_1792615429186_9a0d61",
+      "name": "Vendedor Alpha",
+      "email": "test_user_a_1792615429180@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "36a886aedfab194d3562e6a6387ca66a:eeefb8bf741927c8c611a0649a46b49fdc295777caa451295b234d4375841b92a40f19321349d4ec29210d70020a9b3ad48123996c86ae520c8abf3510641e71",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:43:49.193Z",
+      "lastLoginAt": "2026-10-21T20:43:49.207Z"
+    },
+    {
+      "id": "usr_1792615429224_c562ec",
+      "name": "Vendedor Beta",
+      "email": "test_user_b_1792615429222@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "db6166c2c5d94eb2ea22aa8e0871529d:3ab7d66dc85e6138e52106c83adc8152f6d19439dd9795f2cfbc1f25ab197c4885f03baa4826db5d822b49997c5bd55d6dbc2d3433a73b364f9c27063f59e9d3",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:43:49.235Z",
+      "lastLoginAt": "2026-10-21T20:43:49.235Z"
+    },
+    {
+      "id": "usr_1792615429270_765780",
+      "name": "Vítima Força Bruta",
+      "email": "brute_1792615429268@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "3811076e3c0d0a7a7492bb08079fb15f:fc991770d1272918f5daf1f15d225e51b924c2d615b14dd09c771c6284ddb924dd6cf14247485a1a3438ae0ccac571430bb83091c1cc2a98ad08839bf182197c",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:43:49.277Z",
+      "lastLoginAt": "2026-10-21T20:43:49.277Z"
+    },
+    {
+      "id": "usr_1792615429339_ec0f88",
+      "name": "Usuário Recuperação",
+      "email": "recovery_1792615429337@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "3f05cb6cb5b080b0ae253ec916238e99:afecab4d064128918b55796e2955c2e0f4fb8fa8d93d7f0c7751acea81b98f4670bca1f77819bfd6e0727c5d20401e4963cfda0c788748cc4be6c0f2a905a941",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:43:49.346Z",
+      "lastLoginAt": "2026-10-21T20:43:49.371Z"
+    },
+    {
+      "id": "usr_1792615878063_816416",
+      "name": "Vendedor Alpha",
+      "email": "test_user_a_1792615878057@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "f3e9f96d1a5b8bbd3c419acdab50eb20:62a20b6958bae120832615e1ba147cd21435fa983c77c38689ffe87f96121f0533254adc182125785c0c52b46b293ff04c8df055503968409ed827111331c62c",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:51:18.071Z",
+      "lastLoginAt": "2026-10-21T20:51:18.085Z"
+    },
+    {
+      "id": "usr_1792615878100_23cfe5",
+      "name": "Vendedor Beta",
+      "email": "test_user_b_1792615878098@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "767f8b9ad4b18b54d17c403c12ed8ff0:2df4a4f75ad94d494ab19efa9d48f2ca2427a479797010d56ee4a8ee7d58631fc374aa2011beb0f3bc5fdce7e57773668f2d21364673f54022bb626968d5d0b9",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:51:18.108Z",
+      "lastLoginAt": "2026-10-21T20:51:18.108Z"
+    },
+    {
+      "id": "usr_1792615878138_a7d02d",
+      "name": "Vítima Força Bruta",
+      "email": "brute_1792615878137@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "9fc41af89fe7ee11ae097c06f04a5d86:d3c733cdb0150f6c7936f4465d6e91bb9d42aa5f5730f577779eb563f6a0f4380d5231612803107e240fb5fc05f85f2711ef75f239486b672dcddbb5926393d1",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:51:18.146Z",
+      "lastLoginAt": "2026-10-21T20:51:18.146Z"
+    },
+    {
+      "id": "usr_1792615878205_4f89aa",
+      "name": "Usuário Recuperação",
+      "email": "recovery_1792615878204@example.com",
+      "companyName": "Minha Operação Marketplace",
+      "passwordHash": "8123679842c9b38f162c818d4c10975d:984cd5ad3c2381400bc124d5b139c6346f23257800f94a87230531545ddcb0a5322b716258271fb01f486758a377b0c247d006245520a8c980acb14beb67fcc2",
+      "role": "user",
+      "status": "active",
+      "twoFactorEnabled": false,
+      "createdAt": "2026-10-21T20:51:18.212Z",
+      "lastLoginAt": "2026-10-21T20:51:18.241Z"
     }
   ],
   "sessions": [
@@ -22,6 +214,357 @@
       "loginTime": "2026-10-21T00:51:32.681Z",
       "lastActive": "2026-10-21T00:51:42.591Z",
       "isActive": true
+    },
+    {
+      "id": "sess_1792615328492_10e7429f",
+      "userId": "usr_owner_default",
+      "token": "tok_9f258d909be0241d683f18877773ae1ff47c74902c1a24a3",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.492Z",
+      "lastActive": "2026-10-21T20:42:08.492Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328509_8ac7ab6e",
+      "userId": "usr_1792615328509_052440",
+      "token": "tok_e9f12158b9fd6e7772c92b141b5cd9e10037d1a242c2208a",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.509Z",
+      "lastActive": "2026-10-21T20:42:08.598Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328516_fbce7261",
+      "userId": "usr_1792615328509_052440",
+      "token": "tok_d5ffe23e56cde0e0a993a5955e66f9a15d1f3ce16c9d2cf7",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.516Z",
+      "lastActive": "2026-10-21T20:42:08.600Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328531_22a1aa20",
+      "userId": "usr_1792615328531_eb9406",
+      "token": "tok_e6615a944b747a4de97ea53156e42cfac7c6a22ce9845ce7",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.531Z",
+      "lastActive": "2026-10-21T20:42:08.552Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328606_5a691807",
+      "userId": "usr_1792615328606_ae2466",
+      "token": "tok_217a00133c91bda0b9192e864e3a6b2fd21edd75c29b849a",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.606Z",
+      "lastActive": "2026-10-21T20:42:08.606Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328623_2cd8b282",
+      "userId": "usr_1792615328606_ae2466",
+      "token": "tok_bacefb792ef901d7f736fb0c5ef8f249d840e410a1bbf47d",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.623Z",
+      "lastActive": "2026-10-21T20:42:08.623Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615328627_c1fa9540",
+      "userId": "usr_1792615328626_6986aa",
+      "token": "tok_79d43fdbcade30599c06fe165f5a1a249d4a23a8184fa614",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:08.627Z",
+      "lastActive": "2026-10-21T20:42:08.627Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335177_bcbf013e",
+      "userId": "usr_owner_default",
+      "token": "tok_ec2754e8889699f61842b8d8c58065f7a4217a44cf24f587",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.177Z",
+      "lastActive": "2026-10-21T20:42:15.265Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335207_260b82a5",
+      "userId": "usr_1792615335200_37bb79",
+      "token": "tok_01c655b7fb141ccc7af58e7c34ac530afb31ce92b0e0329d",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.207Z",
+      "lastActive": "2026-10-21T20:42:15.275Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335220_2782c9e2",
+      "userId": "usr_1792615335200_37bb79",
+      "token": "tok_ef5229af6b32ae4391dae29598ed7bafd143f46242ceabd3",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.220Z",
+      "lastActive": "2026-10-21T20:42:15.277Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335248_a3e42834",
+      "userId": "usr_1792615335239_598722",
+      "token": "tok_01d711932b04946e4737eef0f1220009ea797f0f0061e92a",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.248Z",
+      "lastActive": "2026-10-21T20:42:15.263Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335288_d0f04f12",
+      "userId": "usr_1792615335280_0e26ea",
+      "token": "tok_73560a5a79cf473505c705f55c98f1f1390cd1941e383d5a",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.288Z",
+      "lastActive": "2026-10-21T20:42:15.288Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615335352_44606e67",
+      "userId": "usr_1792615335344_791263",
+      "token": "tok_441efbe113920234c6cb8519f0bf43352ccff433ebb85127",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:42:15.352Z",
+      "lastActive": "2026-10-21T20:42:15.352Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615429166_59942669",
+      "userId": "usr_owner_default",
+      "token": "tok_b54ed1e987417f3bc27060e96351ab331c8c40d6330527da",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.166Z",
+      "lastActive": "2026-10-21T20:43:49.257Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615429194_2c47be74",
+      "userId": "usr_1792615429186_9a0d61",
+      "token": "tok_8a88951e4cf1c4cf4bb104e40a00ae3526f0baed1b28d2a3",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.194Z",
+      "lastActive": "2026-10-21T20:43:49.249Z",
+      "isActive": false
+    },
+    {
+      "id": "sess_1792615429207_cf3cc6a0",
+      "userId": "usr_1792615429186_9a0d61",
+      "token": "tok_bbd5ed422a078a81a5144322aeeb657e4df5a42383086688",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.207Z",
+      "lastActive": "2026-10-21T20:43:49.266Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615429235_815b757d",
+      "userId": "usr_1792615429224_c562ec",
+      "token": "tok_be76258a37542e1265288ec552d9cd1e227066025c22319d",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.236Z",
+      "lastActive": "2026-10-21T20:43:49.254Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615429277_41bc4e4e",
+      "userId": "usr_1792615429270_765780",
+      "token": "tok_45aa62ff0c846c787d1bd5c42ac67f428a4b41227d844f5a",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.277Z",
+      "lastActive": "2026-10-21T20:43:49.277Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615429346_fc85380a",
+      "userId": "usr_1792615429339_ec0f88",
+      "token": "tok_9e018039c9f33aaebac29f5a01646ecd039410306c28a56d",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.346Z",
+      "lastActive": "2026-10-21T20:43:49.346Z",
+      "isActive": false
+    },
+    {
+      "id": "sess_1792615429371_62d1b5a4",
+      "userId": "usr_1792615429339_ec0f88",
+      "token": "tok_654834d9450df4f6e7f6789891baef4aebb84698df953cca",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:43:49.371Z",
+      "lastActive": "2026-10-21T20:43:49.371Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615878046_d826054f",
+      "userId": "usr_owner_default",
+      "token": "tok_2c747e0d0a0a1dd353b2acb551d70fd2bd1d8da83405b3fc",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.046Z",
+      "lastActive": "2026-10-21T20:51:18.126Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615878071_31a1bae2",
+      "userId": "usr_1792615878063_816416",
+      "token": "tok_489a0dabf91855bcaaf493d3a2b1ccbb7f338292c0512e13",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.071Z",
+      "lastActive": "2026-10-21T20:51:18.120Z",
+      "isActive": false
+    },
+    {
+      "id": "sess_1792615878085_47197020",
+      "userId": "usr_1792615878063_816416",
+      "token": "tok_b3d402b1b7428b8cfe1caacfab194d9643a5ba0a9dbfb7d9",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.085Z",
+      "lastActive": "2026-10-21T20:51:18.136Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615878108_f3d428ff",
+      "userId": "usr_1792615878100_23cfe5",
+      "token": "tok_c2ccf847ed096176d77289d24eed8a0a4e6542d3b103914f",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.108Z",
+      "lastActive": "2026-10-21T20:51:18.124Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615878146_e21b7da0",
+      "userId": "usr_1792615878138_a7d02d",
+      "token": "tok_c35e71a99bb5149a8a67d5f7ad691a1bfadf9295db2bf323",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.146Z",
+      "lastActive": "2026-10-21T20:51:18.146Z",
+      "isActive": true
+    },
+    {
+      "id": "sess_1792615878212_5b3adbd9",
+      "userId": "usr_1792615878205_4f89aa",
+      "token": "tok_104a3b020f14910446d62f8908efd1262309e079b89246a0",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.212Z",
+      "lastActive": "2026-10-21T20:51:18.212Z",
+      "isActive": false
+    },
+    {
+      "id": "sess_1792615878241_f1e53d37",
+      "userId": "usr_1792615878205_4f89aa",
+      "token": "tok_2fc200df53c1a2aab17571cf6a9a65cbb96ec8979fb2e2cc",
+      "deviceType": "Computador",
+      "browser": "Navegador Web (Sistema Operacional)",
+      "os": "Sistema Operacional",
+      "ip": "127.0.0.1",
+      "approxLocation": "São Paulo, Brasil (Conexão Segura SSL)",
+      "loginTime": "2026-10-21T20:51:18.241Z",
+      "lastActive": "2026-10-21T20:51:18.241Z",
+      "isActive": true
     }
   ],
   "pending2FACodes": [
@@ -30,6 +573,29 @@
       "userId": "usr_owner_default",
       "code": "885803",
       "expiresAt": 1792544198934,
+      "used": true
+    }
+  ],
+  "passwordResetCodes": [
+    {
+      "id": "reset_7bd226f80a67925d19a3956ca4fe6e67",
+      "userId": "usr_1792615335344_791263",
+      "code": "578261",
+      "expiresAt": 1792616235354,
+      "used": false
+    },
+    {
+      "id": "reset_9da8ed4dcb86de764591d3b2cab8da81",
+      "userId": "usr_1792615429339_ec0f88",
+      "code": "918630",
+      "expiresAt": 1792616329350,
+      "used": true
+    },
+    {
+      "id": "reset_072cae4579268b0b4e8d95e6363533f9",
+      "userId": "usr_1792615878205_4f89aa",
+      "code": "853866",
+      "expiresAt": 1792616778215,
       "used": true
     }
   ],
@@ -49,14 +615,753 @@
       "action": "login",
       "details": "Login efetuado no Computador (Navegador Web)",
       "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328492",
+      "userId": "usr_owner_default",
+      "timestamp": "2026-10-21T20:42:08.492Z",
+      "action": "login",
+      "details": "Login efetuado no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328509",
+      "userId": "usr_1792615328509_052440",
+      "timestamp": "2026-10-21T20:42:08.509Z",
+      "action": "login",
+      "details": "Conta criada e primeiro acesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328516",
+      "userId": "usr_1792615328509_052440",
+      "timestamp": "2026-10-21T20:42:08.516Z",
+      "action": "login",
+      "details": "Login efetuado no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328532",
+      "userId": "usr_1792615328531_eb9406",
+      "timestamp": "2026-10-21T20:42:08.532Z",
+      "action": "login",
+      "details": "Conta criada e primeiro acesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328606",
+      "userId": "usr_1792615328606_ae2466",
+      "timestamp": "2026-10-21T20:42:08.606Z",
+      "action": "login",
+      "details": "Conta criada e primeiro acesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328623",
+      "userId": "usr_1792615328606_ae2466",
+      "timestamp": "2026-10-21T20:42:08.623Z",
+      "action": "login",
+      "details": "Login efetuado no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615328627",
+      "userId": "usr_1792615328626_6986aa",
+      "timestamp": "2026-10-21T20:42:08.627Z",
+      "action": "login",
+      "details": "Conta criada e primeiro acesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web"
+    },
+    {
+      "id": "log_1792615335177",
+      "userId": "usr_owner_default",
+      "userEmail": "gabrielasousamarquess2@gmail.com",
+      "timestamp": "2026-10-21T20:42:15.177Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335207",
+      "userId": "usr_1792615335200_37bb79",
+      "userEmail": "test_user_a_1792615335192@example.com",
+      "timestamp": "2026-10-21T20:42:15.208Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335220",
+      "userId": "usr_1792615335200_37bb79",
+      "userEmail": "test_user_a_1792615335192@example.com",
+      "timestamp": "2026-10-21T20:42:15.220Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335248",
+      "userId": "usr_1792615335239_598722",
+      "userEmail": "test_user_b_1792615335236@example.com",
+      "timestamp": "2026-10-21T20:42:15.248Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335288",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.288Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335298",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.298Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615335279@example.com (Tentativa 1/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335309",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.309Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615335279@example.com (Tentativa 2/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335319",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.319Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615335279@example.com (Tentativa 3/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335329",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.329Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615335279@example.com (Tentativa 4/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335339",
+      "userId": "usr_1792615335280_0e26ea",
+      "userEmail": "brute_1792615335279@example.com",
+      "timestamp": "2026-10-21T20:42:15.339Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615335279@example.com (Tentativa 5/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335352",
+      "userId": "usr_1792615335344_791263",
+      "userEmail": "recovery_1792615335343@example.com",
+      "timestamp": "2026-10-21T20:42:15.352Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615335354",
+      "userId": "usr_1792615335344_791263",
+      "userEmail": "recovery_1792615335343@example.com",
+      "timestamp": "2026-10-21T20:42:15.354Z",
+      "action": "password_reset_requested",
+      "details": "Código de recuperação de senha gerado no servidor"
+    },
+    {
+      "id": "log_1792615335366",
+      "userId": "usr_1792615335344_791263",
+      "userEmail": "recovery_1792615335343@example.com",
+      "timestamp": "2026-10-21T20:42:15.366Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para recovery_1792615335343@example.com (Tentativa 1/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429166",
+      "userId": "usr_owner_default",
+      "userEmail": "gabrielasousamarquess2@gmail.com",
+      "timestamp": "2026-10-21T20:43:49.167Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429194",
+      "userId": "usr_1792615429186_9a0d61",
+      "userEmail": "test_user_a_1792615429180@example.com",
+      "timestamp": "2026-10-21T20:43:49.194Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429207",
+      "userId": "usr_1792615429186_9a0d61",
+      "userEmail": "test_user_a_1792615429180@example.com",
+      "timestamp": "2026-10-21T20:43:49.207Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429236",
+      "userId": "usr_1792615429224_c562ec",
+      "userEmail": "test_user_b_1792615429222@example.com",
+      "timestamp": "2026-10-21T20:43:49.236Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429261",
+      "userId": "usr_1792615429186_9a0d61",
+      "userEmail": "test_user_a_1792615429180@example.com",
+      "timestamp": "2026-10-21T20:43:49.261Z",
+      "action": "session_terminated",
+      "details": "Sessão encerrada remotamente: Computador (Navegador Web (Sistema Operacional))"
+    },
+    {
+      "id": "log_1792615429277",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.277Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429288",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.288Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615429268@example.com (Tentativa 1/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429300",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.300Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615429268@example.com (Tentativa 2/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429310",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.310Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615429268@example.com (Tentativa 3/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429321",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.321Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615429268@example.com (Tentativa 4/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429332",
+      "userId": "usr_1792615429270_765780",
+      "userEmail": "brute_1792615429268@example.com",
+      "timestamp": "2026-10-21T20:43:49.332Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615429268@example.com (Tentativa 5/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429346",
+      "userId": "usr_1792615429339_ec0f88",
+      "userEmail": "recovery_1792615429337@example.com",
+      "timestamp": "2026-10-21T20:43:49.346Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615429350",
+      "userId": "usr_1792615429339_ec0f88",
+      "userEmail": "recovery_1792615429337@example.com",
+      "timestamp": "2026-10-21T20:43:49.350Z",
+      "action": "password_reset_requested",
+      "details": "Código de recuperação de senha gerado no servidor"
+    },
+    {
+      "id": "log_1792615429360",
+      "userId": "usr_1792615429339_ec0f88",
+      "userEmail": "recovery_1792615429337@example.com",
+      "timestamp": "2026-10-21T20:43:49.360Z",
+      "action": "password_reset_completed",
+      "details": "Senha redefinida com sucesso. 1 sessão(ões) anterior(es) revogada(s) por segurança."
+    },
+    {
+      "id": "log_1792615429371",
+      "userId": "usr_1792615429339_ec0f88",
+      "userEmail": "recovery_1792615429337@example.com",
+      "timestamp": "2026-10-21T20:43:49.371Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878046",
+      "userId": "usr_owner_default",
+      "userEmail": "gabrielasousamarquess2@gmail.com",
+      "timestamp": "2026-10-21T20:51:18.046Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878072",
+      "userId": "usr_1792615878063_816416",
+      "userEmail": "test_user_a_1792615878057@example.com",
+      "timestamp": "2026-10-21T20:51:18.072Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878085",
+      "userId": "usr_1792615878063_816416",
+      "userEmail": "test_user_a_1792615878057@example.com",
+      "timestamp": "2026-10-21T20:51:18.085Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878108",
+      "userId": "usr_1792615878100_23cfe5",
+      "userEmail": "test_user_b_1792615878098@example.com",
+      "timestamp": "2026-10-21T20:51:18.108Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878130",
+      "userId": "usr_1792615878063_816416",
+      "userEmail": "test_user_a_1792615878057@example.com",
+      "timestamp": "2026-10-21T20:51:18.130Z",
+      "action": "session_terminated",
+      "details": "Sessão encerrada remotamente: Computador (Navegador Web (Sistema Operacional))"
+    },
+    {
+      "id": "log_1792615878146",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.146Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878158",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.158Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615878137@example.com (Tentativa 1/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878169",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.169Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615878137@example.com (Tentativa 2/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878179",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.179Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615878137@example.com (Tentativa 3/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878190",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.190Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615878137@example.com (Tentativa 4/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878200",
+      "userId": "usr_1792615878138_a7d02d",
+      "userEmail": "brute_1792615878137@example.com",
+      "timestamp": "2026-10-21T20:51:18.200Z",
+      "action": "failed_login",
+      "details": "Senha incorreta para brute_1792615878137@example.com (Tentativa 5/5)",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878212",
+      "userId": "usr_1792615878205_4f89aa",
+      "userEmail": "recovery_1792615878204@example.com",
+      "timestamp": "2026-10-21T20:51:18.212Z",
+      "action": "login",
+      "details": "Conta registrada com sucesso via Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "log_1792615878215",
+      "userId": "usr_1792615878205_4f89aa",
+      "userEmail": "recovery_1792615878204@example.com",
+      "timestamp": "2026-10-21T20:51:18.215Z",
+      "action": "password_reset_requested",
+      "details": "Código de recuperação de senha gerado no servidor"
+    },
+    {
+      "id": "log_1792615878225",
+      "userId": "usr_1792615878205_4f89aa",
+      "userEmail": "recovery_1792615878204@example.com",
+      "timestamp": "2026-10-21T20:51:18.225Z",
+      "action": "password_reset_completed",
+      "details": "Senha redefinida com sucesso. 1 sessão(ões) anterior(es) revogada(s) por segurança."
+    },
+    {
+      "id": "log_1792615878241",
+      "userId": "usr_1792615878205_4f89aa",
+      "userEmail": "recovery_1792615878204@example.com",
+      "timestamp": "2026-10-21T20:51:18.241Z",
+      "action": "login",
+      "details": "Login autorizado com sucesso no Computador (Navegador Web)",
+      "device": "Computador - Navegador Web",
+      "ip": "127.0.0.1"
     }
   ],
-  "products": {},
-  "orders": {},
-  "purchases": {},
-  "expenses": {},
-  "transfers": {},
-  "cashBalances": {},
-  "memories": {},
-  "versions": {}
+  "products": {
+    "usr_1792615328509_052440": [
+      {
+        "id": "prod_1792615328518",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:42:08.518Z"
+      }
+    ],
+    "usr_1792615328531_eb9406": [
+      {
+        "id": "spoofed_1792615328547",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:42:08.518Z",
+        "userId": "usr_1792615328509_052440"
+      }
+    ],
+    "usr_1792615335200_37bb79": [
+      {
+        "id": "prod_1792615335222",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:42:15.222Z",
+        "userId": "usr_1792615335200_37bb79"
+      }
+    ],
+    "usr_1792615335239_598722": [
+      {
+        "id": "spoofed_1792615335253",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:42:15.222Z",
+        "userId": "usr_1792615335239_598722"
+      }
+    ],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [
+      {
+        "id": "prod_1792615429210",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:43:49.210Z",
+        "userId": "usr_1792615429186_9a0d61"
+      }
+    ],
+    "usr_1792615429224_c562ec": [
+      {
+        "id": "spoofed_1792615429242",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:43:49.210Z",
+        "userId": "usr_1792615429224_c562ec"
+      }
+    ],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [
+      {
+        "id": "prod_1792615878088",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:51:18.088Z",
+        "userId": "usr_1792615878063_816416"
+      }
+    ],
+    "usr_1792615878100_23cfe5": [
+      {
+        "id": "spoofed_1792615878114",
+        "name": "Kit Câmera de Segurança HD",
+        "sku": "CAM-HD-001",
+        "category": "Eletrônicos",
+        "costPrice": 85,
+        "packagingCost": 4.5,
+        "markup": 45,
+        "margin": 25,
+        "isArchived": false,
+        "updatedAt": "2026-10-21T20:51:18.088Z",
+        "userId": "usr_1792615878100_23cfe5"
+      }
+    ],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "orders": {
+    "usr_1792615328509_052440": [],
+    "usr_1792615335200_37bb79": [],
+    "usr_1792615335239_598722": [],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [],
+    "usr_1792615429224_c562ec": [],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [],
+    "usr_1792615878100_23cfe5": [],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "purchases": {
+    "usr_1792615328509_052440": [],
+    "usr_1792615335200_37bb79": [],
+    "usr_1792615335239_598722": [],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [],
+    "usr_1792615429224_c562ec": [],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [],
+    "usr_1792615878100_23cfe5": [],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "expenses": {
+    "usr_1792615328509_052440": [],
+    "usr_1792615335200_37bb79": [],
+    "usr_1792615335239_598722": [],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [],
+    "usr_1792615429224_c562ec": [],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [],
+    "usr_1792615878100_23cfe5": [],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "transfers": {
+    "usr_1792615328509_052440": [],
+    "usr_1792615335200_37bb79": [],
+    "usr_1792615335239_598722": [],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [],
+    "usr_1792615429224_c562ec": [],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [],
+    "usr_1792615878100_23cfe5": [],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "cashBalances": {
+    "usr_1792615335200_37bb79": {
+      "userId": "usr_1792615335200_37bb79",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:42:15.207Z"
+    },
+    "usr_1792615335239_598722": {
+      "userId": "usr_1792615335239_598722",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:42:15.248Z"
+    },
+    "usr_1792615335280_0e26ea": {
+      "userId": "usr_1792615335280_0e26ea",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:42:15.288Z"
+    },
+    "usr_1792615335344_791263": {
+      "userId": "usr_1792615335344_791263",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:42:15.352Z"
+    },
+    "usr_1792615429186_9a0d61": {
+      "userId": "usr_1792615429186_9a0d61",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:43:49.193Z"
+    },
+    "usr_1792615429224_c562ec": {
+      "userId": "usr_1792615429224_c562ec",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:43:49.235Z"
+    },
+    "usr_1792615429270_765780": {
+      "userId": "usr_1792615429270_765780",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:43:49.277Z"
+    },
+    "usr_1792615429339_ec0f88": {
+      "userId": "usr_1792615429339_ec0f88",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:43:49.346Z"
+    },
+    "usr_1792615878063_816416": {
+      "userId": "usr_1792615878063_816416",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:51:18.071Z"
+    },
+    "usr_1792615878100_23cfe5": {
+      "userId": "usr_1792615878100_23cfe5",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:51:18.108Z"
+    },
+    "usr_1792615878138_a7d02d": {
+      "userId": "usr_1792615878138_a7d02d",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:51:18.146Z"
+    },
+    "usr_1792615878205_4f89aa": {
+      "userId": "usr_1792615878205_4f89aa",
+      "amount": 0,
+      "startDate": "2026-10-21",
+      "updatedAt": "2026-10-21T20:51:18.212Z"
+    }
+  },
+  "memories": {
+    "usr_1792615335200_37bb79": [],
+    "usr_1792615335239_598722": [],
+    "usr_1792615335280_0e26ea": [],
+    "usr_1792615335344_791263": [],
+    "usr_1792615429186_9a0d61": [],
+    "usr_1792615429224_c562ec": [],
+    "usr_1792615429270_765780": [],
+    "usr_1792615429339_ec0f88": [],
+    "usr_1792615878063_816416": [],
+    "usr_1792615878100_23cfe5": [],
+    "usr_1792615878138_a7d02d": [],
+    "usr_1792615878205_4f89aa": []
+  },
+  "versions": {
+    "usr_1792615328509_052440": 2,
+    "usr_1792615328531_eb9406": 2,
+    "usr_1792615335200_37bb79": 2,
+    "usr_1792615335239_598722": 2,
+    "usr_1792615335280_0e26ea": 1,
+    "usr_1792615335344_791263": 1,
+    "usr_1792615429186_9a0d61": 2,
+    "usr_1792615429224_c562ec": 2,
+    "usr_1792615429270_765780": 1,
+    "usr_1792615429339_ec0f88": 1,
+    "usr_1792615878063_816416": 2,
+    "usr_1792615878100_23cfe5": 2,
+    "usr_1792615878138_a7d02d": 1,
+    "usr_1792615878205_4f89aa": 1
+  }
 }

@@ -150,25 +150,25 @@ export const syncService = {
       const data = await res.json();
       currentLocalVersion = data.version;
 
-      if (Array.isArray(data.products) && data.products.length > 0) {
+      if (Array.isArray(data.products)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `products_${userId}`, JSON.stringify(data.products));
       }
-      if (Array.isArray(data.orders) && data.orders.length > 0) {
+      if (Array.isArray(data.orders)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `orders_${userId}`, JSON.stringify(data.orders));
       }
-      if (Array.isArray(data.purchases) && data.purchases.length > 0) {
+      if (Array.isArray(data.purchases)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `purchases_${userId}`, JSON.stringify(data.purchases));
       }
-      if (Array.isArray(data.expenses) && data.expenses.length > 0) {
+      if (Array.isArray(data.expenses)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `expenses_${userId}`, JSON.stringify(data.expenses));
       }
-      if (Array.isArray(data.transfers) && data.transfers.length > 0) {
+      if (Array.isArray(data.transfers)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `transfers_${userId}`, JSON.stringify(data.transfers));
       }
       if (data.cashBalance) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `cash_initial_${userId}`, JSON.stringify(data.cashBalance));
       }
-      if (Array.isArray(data.memories) && data.memories.length > 0) {
+      if (Array.isArray(data.memories)) {
         localStorage.setItem(STORAGE_KEY_PREFIX + `trajectory_${userId}`, JSON.stringify(data.memories));
       }
 

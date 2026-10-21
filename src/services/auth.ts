@@ -1,4 +1,4 @@
-import { UserProfile, UserSession, AccessLog } from '../types/finance';
+import { UserProfile, UserSession, AccessLog, AdminUserListItem, AdminAuditLog } from '../types/finance';
 import { logsRepo } from './db';
 
 const AUTH_USER_KEY = 'lucraibr_auth_current_user';
@@ -24,15 +24,6 @@ export function subscribeToAuth(callback: AuthListener): () => void {
   };
 }
 
-const DEFAULT_USER: UserProfile = {
-  id: 'usr_owner_default',
-  email: 'gabrielasousamarquess2@gmail.com',
-  name: 'Gabriela Marques',
-  companyName: 'LucraiBR Vendas Online',
-  twoFactorEnabled: false,
-  createdAt: new Date().toISOString(),
-};
-
 export const authService = {
   getToken(): string | null {
     try {
@@ -57,11 +48,8 @@ export const authService = {
   async checkServerSession(): Promise<UserProfile | null> {
     const token = this.getToken();
     if (!token) {
-      // Auto-login default user for first load if no token exists
-      const res = await this.login(DEFAULT_USER.email);
-      if (res.success) {
-        return this.getCurrentUser();
-      }
+      // No token -> User must authenticate via login/register
+      emitAuthChange(null);
       return null;
     }
 
@@ -79,15 +67,17 @@ export const authService = {
         emitAuthChange(user);
         return user;
       } else {
-        // Session invalid or terminated remotely
+        // Session invalid, revoked or blocked
         localStorage.removeItem(AUTH_TOKEN_KEY);
         localStorage.removeItem(AUTH_USER_KEY);
         emitAuthChange(null);
         return null;
       }
     } catch (err) {
-      console.warn('Network check failed, falling back to cached user:', err);
-      return this.getCurrentUser();
+      console.warn('Network check failed, using cached session if available:', err);
+      const cached = this.getCurrentUser();
+      emitAuthChange(cached);
+      return cached;
     }
   },
 
@@ -130,12 +120,6 @@ export const authService = {
       return { success: true };
     } catch (err) {
       console.error('Login error:', err);
-      // Offline fallback: if default user
-      if (email.trim().toLowerCase() === DEFAULT_USER.email.toLowerCase()) {
-        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(DEFAULT_USER));
-        emitAuthChange(DEFAULT_USER);
-        return { success: true };
-      }
       return { success: false, error: 'Erro de conexão com o servidor de autenticação.' };
     }
   },
@@ -192,6 +176,57 @@ export const authService = {
     }
   },
 
+  // Password Recovery - Request Reset Code
+  async forgotPassword(email: string): Promise<{
+    success: boolean;
+    resetToken?: string;
+    codeHint?: string;
+    expiresInMinutes?: number;
+    error?: string;
+  }> {
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao solicitar recuperação.' };
+      }
+      return {
+        success: true,
+        resetToken: data.resetToken,
+        codeHint: data.codeHint,
+        expiresInMinutes: data.expiresInMinutes,
+      };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  },
+
+  // Password Recovery - Submit New Password
+  async resetPassword(
+    resetToken: string,
+    code: string,
+    newPassword: string
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resetToken, code, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || 'Erro ao redefinir senha.' };
+      }
+      return { success: true, message: data.message };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  },
+
   async logout(): Promise<void> {
     const token = this.getToken();
     if (token) {
@@ -212,10 +247,12 @@ export const authService = {
   async updateProfile(name: string, companyName?: string): Promise<{ success: boolean; error?: string }> {
     const token = this.getToken();
     const current = this.getCurrentUser();
+    if (!current) return { success: false, error: 'Não autenticado' };
+
     const updatedUser: UserProfile = {
-      ...(current || DEFAULT_USER),
+      ...current,
       name: name.trim(),
-      companyName: companyName?.trim() || current?.companyName,
+      companyName: companyName?.trim() || current.companyName,
     };
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(updatedUser));
     emitAuthChange(updatedUser);
@@ -405,5 +442,104 @@ export const authService = {
       console.warn('Failed to fetch logs:', err);
     }
     return logsRepo.getLogs(this.getCurrentUser()?.id || '');
+  },
+
+  // ==========================================
+  // ADMINISTRATOR METHODS (Protected on Server)
+  // ==========================================
+  async adminGetUsers(): Promise<AdminUserListItem[]> {
+    const token = this.getToken();
+    if (!token) return [];
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.users || [];
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin users:', err);
+    }
+    return [];
+  },
+
+  async adminSetUserStatus(
+    userId: string,
+    status: 'active' | 'blocked'
+  ): Promise<{ success: boolean; message?: string; error?: string }> {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Não autenticado como administrador.' };
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error || 'Erro ao alterar status.' };
+      return { success: true, message: data.message };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  },
+
+  async adminTerminateUserSessions(
+    userId: string
+  ): Promise<{ success: boolean; terminatedCount?: number; error?: string }> {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Não autenticado como administrador.' };
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/terminate-all-sessions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      return { success: true, terminatedCount: data.terminatedCount };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  },
+
+  async adminTerminateSession(sessionId: string): Promise<{ success: boolean; error?: string }> {
+    const token = this.getToken();
+    if (!token) return { success: false, error: 'Não autenticado como administrador.' };
+
+    try {
+      const res = await fetch(`/api/admin/sessions/${sessionId}/terminate`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) return { success: false, error: data.error };
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Erro de conexão com o servidor.' };
+    }
+  },
+
+  async adminGetAuditLogs(): Promise<AdminAuditLog[]> {
+    const token = this.getToken();
+    if (!token) return [];
+
+    try {
+      const res = await fetch('/api/admin/audit-logs', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.logs || [];
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin audit logs:', err);
+    }
+    return [];
   },
 };

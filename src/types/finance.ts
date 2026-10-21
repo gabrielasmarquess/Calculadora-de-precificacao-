@@ -181,8 +181,45 @@ export interface UserProfile {
   email: string;
   name: string;
   companyName?: string;
+  role?: 'admin' | 'user';
+  status?: 'active' | 'blocked';
   twoFactorEnabled?: boolean;
   createdAt: string;
+}
+
+export interface AdminUserListItem {
+  id: string;
+  email: string;
+  name: string;
+  companyName?: string;
+  role: 'admin' | 'user';
+  status: 'active' | 'blocked';
+  twoFactorEnabled: boolean;
+  createdAt: string;
+  lastLoginAt?: string;
+  activeSessionsCount: number;
+  failedLoginAttempts: number;
+  activeSessions: {
+    id: string;
+    deviceType: string;
+    browser: string;
+    os?: string;
+    ip?: string;
+    approxLocation?: string;
+    loginTime: string;
+    lastActive?: string;
+  }[];
+}
+
+export interface AdminAuditLog {
+  id: string;
+  userId: string;
+  userEmail?: string;
+  timestamp: string;
+  action: string;
+  details: string;
+  device?: string;
+  ip?: string;
 }
 
 export interface TrajectoryMemory {
