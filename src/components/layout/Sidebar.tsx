@@ -24,8 +24,7 @@ export type NavSection =
   | 'cashflow'
   | 'expenses'
   | 'import'
-  | 'account'
-  | 'admin';
+  | 'account';
 
 interface SidebarProps {
   currentSection: NavSection;
@@ -35,7 +34,6 @@ interface SidebarProps {
   pendingTransfersCount: number;
   pendingPurchasesCount: number;
   productsCount?: number;
-  isAdmin?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -46,7 +44,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   pendingTransfersCount,
   pendingPurchasesCount,
   productsCount,
-  isAdmin,
 }) => {
   const navItems: { id: NavSection; label: string; icon: React.ElementType; badge?: number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -58,8 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'cashflow', label: 'Fluxo de caixa', icon: ArrowLeftRight },
     { id: 'expenses', label: 'Despesas e gastos', icon: CreditCard },
     { id: 'import', label: 'Importação de planilhas', icon: FileSpreadsheet },
-    { id: 'account', label: 'Minha conta e segurança', icon: ShieldCheck },
-    ...(isAdmin ? [{ id: 'admin' as NavSection, label: 'Painel Admin', icon: ShieldCheck }] : []),
+    { id: 'account', label: 'Minha operação & backup', icon: ShieldCheck },
   ];
 
   return (

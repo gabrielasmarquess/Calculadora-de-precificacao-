@@ -2152,21 +2152,21 @@
     "usr_1792617723418_72e2f1": [],
     "usr_owner_default": [
       {
-        "id": "phone_prod_real_1",
-        "name": "Bolsa Feminina Couro Legítimo",
-        "referencePrice": 189.9,
-        "habitualCost": 75,
-        "category": "Moda",
-        "updatedAt": "2026-10-21T21:22:33.614Z",
+        "id": "prod_direct_test_1792677598273",
+        "name": "Produto Teste Direto Preservado",
+        "habitualCost": 25,
+        "referencePrice": 59.9,
+        "category": "Geral",
+        "updatedAt": "2026-10-22T13:59:58.273Z",
         "userId": "usr_owner_default"
       },
       {
-        "id": "phone_prod_real_2",
-        "name": "Vestido Midi Floral Verão",
-        "referencePrice": 129.9,
-        "habitualCost": 45,
-        "category": "Vestuário",
-        "updatedAt": "2026-10-21T21:22:33.614Z",
+        "id": "phone_saved_1792677598288",
+        "name": "Fone Bluetooth Celular Preservado",
+        "habitualCost": 35,
+        "referencePrice": 89.9,
+        "category": "Eletrônicos",
+        "updatedAt": "2026-10-22T13:59:58.288Z",
         "userId": "usr_owner_default"
       }
     ],
@@ -2228,7 +2228,8 @@
     "usr_1792617772876_be104f": [],
     "usr_1792617772916_dd5eed": [],
     "usr_1792617772964_fa83d7": [],
-    "usr_1792617773044_a07234": []
+    "usr_1792617773044_a07234": [],
+    "usr_owner_default": []
   },
   "purchases": {
     "usr_1792615328509_052440": [],
@@ -2255,7 +2256,8 @@
     "usr_1792617772876_be104f": [],
     "usr_1792617772916_dd5eed": [],
     "usr_1792617772964_fa83d7": [],
-    "usr_1792617773044_a07234": []
+    "usr_1792617773044_a07234": [],
+    "usr_owner_default": []
   },
   "expenses": {
     "usr_1792615328509_052440": [],
@@ -2282,7 +2284,8 @@
     "usr_1792617772876_be104f": [],
     "usr_1792617772916_dd5eed": [],
     "usr_1792617772964_fa83d7": [],
-    "usr_1792617773044_a07234": []
+    "usr_1792617773044_a07234": [],
+    "usr_owner_default": []
   },
   "transfers": {
     "usr_1792615328509_052440": [],
@@ -2309,7 +2312,8 @@
     "usr_1792617772876_be104f": [],
     "usr_1792617772916_dd5eed": [],
     "usr_1792617772964_fa83d7": [],
-    "usr_1792617773044_a07234": []
+    "usr_1792617773044_a07234": [],
+    "usr_owner_default": []
   },
   "cashBalances": {
     "usr_1792615335200_37bb79": {
@@ -2433,7 +2437,7 @@
       "updatedAt": "2026-10-21T21:22:03.425Z"
     },
     "usr_owner_default": {
-      "amount": 1500,
+      "amount": 800,
       "startDate": "2026-10-01",
       "userId": "usr_owner_default"
     },
@@ -2486,7 +2490,8 @@
     "usr_1792617772876_be104f": [],
     "usr_1792617772916_dd5eed": [],
     "usr_1792617772964_fa83d7": [],
-    "usr_1792617773044_a07234": []
+    "usr_1792617773044_a07234": [],
+    "usr_owner_default": []
   },
   "versions": {
     "usr_1792615328509_052440": 2,
@@ -2511,7 +2516,7 @@
     "usr_1792617723309_8b3e3b": 2,
     "usr_1792617723352_07fdd2": 1,
     "usr_1792617723418_72e2f1": 1,
-    "usr_owner_default": 2,
+    "usr_owner_default": 6,
     "usr_1792617772876_be104f": 2,
     "usr_1792617772916_dd5eed": 2,
     "usr_1792617772964_fa83d7": 1,
