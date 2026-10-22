@@ -12,6 +12,7 @@ import {
   ShoppingBag,
   Truck,
   CreditCard,
+  Trash2,
 } from 'lucide-react';
 import { authService } from '../services/auth';
 import {
@@ -277,6 +278,34 @@ export const AccountPage: React.FC<AccountPageProps> = ({
             <span>Baixar Backup (.JSON)</span>
           </button>
         </div>
+      </div>
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 rounded-2xl p-6 border border-red-200 shadow-xs space-y-4">
+        <div className="flex items-center gap-2.5 pb-3 border-b border-red-100">
+          <div className="w-8 h-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold">
+            <Trash2 className="w-4 h-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-red-900">Zona de Perigo (Reset)</h2>
+            <p className="text-[11px] text-red-600">
+              Esta ação apagará TODOS os dados cadastrados. Use apenas se necessário.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            if (confirm('Tem certeza absoluta? Todos os registros serão permanentemente apagados em todos os aparelhos.')) {
+              await fetch('/api/reset-data', { method: 'POST' });
+              localStorage.clear();
+              window.location.reload();
+            }
+          }}
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs shadow-xs transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-4 h-4" />
+          <span>Zerar todos os dados do aplicativo</span>
+        </button>
       </div>
     </div>
   );

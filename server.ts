@@ -360,6 +360,28 @@ async function startServer() {
     });
   });
 
+  // Reset all application data
+  app.post('/api/reset-data', (req, res) => {
+    console.log('Resetting database...');
+    db = {
+      users: [DEFAULT_USER],
+      sessions: [],
+      pending2FACodes: [],
+      passwordResetCodes: [],
+      securityLogs: [],
+      products: {},
+      orders: {},
+      purchases: {},
+      expenses: {},
+      transfers: {},
+      cashBalances: {},
+      memories: {},
+      versions: {},
+    };
+    saveDatabase(db);
+    res.json({ success: true });
+  });
+
   // ==========================================
   // FRONTEND CLIENT SERVING
   // ==========================================
