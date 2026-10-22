@@ -58,241 +58,18 @@ export function subscribeToSyncStatus(callback: (status: SyncStatus) => void): (
   };
 }
 
-let activeSyncUserId: string = 'usr_owner_default';
+let activeSyncUserId: string | null = null;
 try {
-  const cachedUser = localStorage.getItem('lucraibr_profile_data') || localStorage.getItem('lucraibr_auth_current_user');
+  const cachedUser = localStorage.getItem('lucraibr_auth_current_user');
   if (cachedUser) {
-    activeSyncUserId = JSON.parse(cachedUser).id || 'usr_owner_default';
+    activeSyncUserId = JSON.parse(cachedUser).id;
   }
 } catch {
-  activeSyncUserId = 'usr_owner_default';
+  // Ignore
 }
 
 let pushTimeout: any = null;
 let currentLocalVersion = 0;
-
-// Safe merge helper: NEVER overwrites non-empty local items with empty server arrays
-export function mergeLocalAndRemote<T extends { id?: string; updatedAt?: string }>(
-  localItems: T[] = [],
-  remoteItems: T[] = []
-): T[] {
-  if (!remoteItems || remoteItems.length === 0) {
-    return localItems || [];
-  }
-  if (!localItems || localItems.length === 0) {
-    return remoteItems || [];
-  }
-
-  const map = new Map<string, T>();
-
-  // Add all remote items
-  remoteItems.forEach((item, idx) => {
-    const key = item.id || `remote_${idx}`;
-    map.set(key, item);
-  });
-
-  // Preserve local items not on server, or newer locally
-  localItems.forEach((localItem, idx) => {
-    const key = localItem.id || `local_${idx}`;
-    if (!map.has(key)) {
-      map.set(key, localItem);
-    } else {
-      const remoteItem = map.get(key)!;
-      const localTime = new Date(localItem.updatedAt || 0).getTime();
-      const remoteTime = new Date(remoteItem.updatedAt || 0).getTime();
-      if (localTime > remoteTime) {
-        map.set(key, localItem);
-      }
-    }
-  });
-
-  return Array.from(map.values());
-}
-
-/**
- * Scans all keys in localStorage to find any products, orders, purchases, expenses
- * or transfers that might have been saved under older keys or before authentication.
- * Backs them up and merges them safely to targetUserId if provided.
- */
-export function detectAndPreserveAllDeviceData(targetUserId?: string): {
-  products: Product[];
-  orders: Order[];
-  purchases: Purchase[];
-  expenses: Expense[];
-  transfers: TransferPaymentEntry[];
-  totalRecordsFound: number;
-} {
-  const found = {
-    products: [] as Product[],
-    orders: [] as Order[],
-    purchases: [] as Purchase[],
-    expenses: [] as Expense[],
-    transfers: [] as TransferPaymentEntry[],
-    totalRecordsFound: 0,
-  };
-
-  if (typeof window === 'undefined' || !window.localStorage) {
-    return found;
-  }
-
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      // Skip auth session keys and safety vault itself
-      if (key.includes('session_token') || key.includes('device_safety_vault')) continue;
-
-      try {
-        const raw = localStorage.getItem(key);
-        if (!raw || (!raw.startsWith('[') && !raw.startsWith('{'))) continue;
-        const parsed = JSON.parse(raw);
-
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const sample = parsed[0];
-          // Detect products
-          if (sample && (sample.habitualCost !== undefined || sample.referencePrice !== undefined) && (sample.name || sample.brand)) {
-            parsed.forEach((item) => {
-              if (item && !found.products.some((p) => p.id === item.id || (p.name === item.name && p.referencePrice === item.referencePrice))) {
-                found.products.push(item);
-              }
-            });
-          }
-          // Detect orders
-          else if (sample && (sample.orderNumber || sample.grossAmount !== undefined) && sample.items) {
-            parsed.forEach((item) => {
-              if (item && !found.orders.some((o) => o.id === item.id || o.orderNumber === item.orderNumber)) {
-                found.orders.push(item);
-              }
-            });
-          }
-          // Detect purchases
-          else if (sample && (sample.supplierName || sample.productDescription) && sample.totalCost !== undefined) {
-            parsed.forEach((item) => {
-              if (item && !found.purchases.some((p) => p.id === item.id)) {
-                found.purchases.push(item);
-              }
-            });
-          }
-          // Detect expenses
-          else if (sample && (sample.category || sample.description) && sample.amount !== undefined && sample.expenseDate) {
-            parsed.forEach((item) => {
-              if (item && !found.expenses.some((e) => e.id === item.id)) {
-                found.expenses.push(item);
-              }
-            });
-          }
-          // Detect transfers
-          else if (sample && (sample.receivedDate || sample.paymentType) && sample.amount !== undefined) {
-            parsed.forEach((item) => {
-              if (item && !found.transfers.some((t) => t.id === item.id)) {
-                found.transfers.push(item);
-              }
-            });
-          }
-        }
-      } catch {
-        // Continue scanning other keys safely
-      }
-    }
-
-    found.totalRecordsFound =
-      found.products.length +
-      found.orders.length +
-      found.purchases.length +
-      found.expenses.length +
-      found.transfers.length;
-
-    // Create an immutable safety backup in localStorage if records exist
-    if (found.totalRecordsFound > 0) {
-      try {
-        localStorage.setItem(
-          'lucraibr_device_safety_vault',
-          JSON.stringify({
-            savedAt: new Date().toISOString(),
-            ...found,
-          })
-        );
-      } catch {
-        // Ignore quota
-      }
-    }
-
-    // If targetUserId is given, merge rescued records into the target user's storage
-    if (targetUserId) {
-      if (found.products.length > 0) {
-        const cur = getStorage<Product[]>(`products_${targetUserId}`, []);
-        const merged = mergeLocalAndRemote(cur, found.products.map(p => ({ ...p, userId: targetUserId })));
-        localStorage.setItem(STORAGE_KEY_PREFIX + `products_${targetUserId}`, JSON.stringify(merged));
-      }
-      if (found.orders.length > 0) {
-        const cur = getStorage<Order[]>(`orders_${targetUserId}`, []);
-        const merged = mergeLocalAndRemote(cur, found.orders.map(o => ({ ...o, userId: targetUserId })));
-        localStorage.setItem(STORAGE_KEY_PREFIX + `orders_${targetUserId}`, JSON.stringify(merged));
-      }
-      if (found.purchases.length > 0) {
-        const cur = getStorage<Purchase[]>(`purchases_${targetUserId}`, []);
-        const merged = mergeLocalAndRemote(cur, found.purchases.map(p => ({ ...p, userId: targetUserId })));
-        localStorage.setItem(STORAGE_KEY_PREFIX + `purchases_${targetUserId}`, JSON.stringify(merged));
-      }
-      if (found.expenses.length > 0) {
-        const cur = getStorage<Expense[]>(`expenses_${targetUserId}`, []);
-        const merged = mergeLocalAndRemote(cur, found.expenses.map(e => ({ ...e, userId: targetUserId })));
-        localStorage.setItem(STORAGE_KEY_PREFIX + `expenses_${targetUserId}`, JSON.stringify(merged));
-      }
-      if (found.transfers.length > 0) {
-        const cur = getStorage<TransferPaymentEntry[]>(`transfers_${targetUserId}`, []);
-        const merged = mergeLocalAndRemote(cur, found.transfers.map(t => ({ ...t, userId: targetUserId })));
-        localStorage.setItem(STORAGE_KEY_PREFIX + `transfers_${targetUserId}`, JSON.stringify(merged));
-      }
-    }
-  } catch (err) {
-    console.warn('Device scan notice:', err);
-  }
-
-  return found;
-}
-
-/**
- * Downloads a complete JSON backup file of all data saved on this phone/browser.
- * Can be triggered directly by the user at any time for total peace of mind.
- */
-export function exportDeviceBackupJson(): { success: boolean; totalRecords: number } {
-  try {
-    const data = detectAndPreserveAllDeviceData();
-    const backupPayload = {
-      app: 'LucraiBR Vendas Online',
-      version: '1.0.0',
-      exportedAt: new Date().toISOString(),
-      summary: {
-        productsCount: data.products.length,
-        ordersCount: data.orders.length,
-        purchasesCount: data.purchases.length,
-        expensesCount: data.expenses.length,
-        transfersCount: data.transfers.length,
-        totalRecords: data.totalRecordsFound,
-      },
-      data,
-    };
-
-    const blob = new Blob([JSON.stringify(backupPayload, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const dateStr = new Date().toISOString().split('T')[0];
-    a.href = url;
-    a.download = `lucraibr_backup_dados_${dateStr}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    return { success: true, totalRecords: data.totalRecordsFound };
-  } catch (e) {
-    console.error('Failed to export backup:', e);
-    return { success: false, totalRecords: 0 };
-  }
-}
 
 export const syncService = {
   getStatus(): SyncStatus {
@@ -300,45 +77,39 @@ export const syncService = {
   },
 
   setActiveUser(userId: string) {
-    activeSyncUserId = userId || 'usr_owner_default';
-    this.initSync(activeSyncUserId);
+    activeSyncUserId = userId;
+    this.initSync(userId);
   },
 
   async initSync(userId: string) {
-    const targetUserId = userId || 'usr_owner_default';
-    activeSyncUserId = targetUserId;
+    activeSyncUserId = userId;
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
 
     try {
       emitSyncStatus('syncing');
+      initUserDatabase(userId);
 
-      // 1. First, rescue and preserve all data present on this device across any keys
-      detectAndPreserveAllDeviceData(targetUserId);
-
-      // 2. Ensure database structures are ready
-      initUserDatabase(targetUserId);
-
-      // 3. Read all local data
-      const localProducts = getStorage<Product[]>(`products_${targetUserId}`, []);
-      const localOrders = getStorage<Order[]>(`orders_${targetUserId}`, []);
-      const localPurchases = getStorage<Purchase[]>(`purchases_${targetUserId}`, []);
-      const localExpenses = getStorage<Expense[]>(`expenses_${targetUserId}`, []);
-      const localTransfers = getStorage<TransferPaymentEntry[]>(`transfers_${targetUserId}`, []);
-      const localCash = getStorage<CashInitialBalance>(`cash_initial_${targetUserId}`, {
-        userId: targetUserId,
+      const localProducts = getStorage<Product[]>(`products_${userId}`, []);
+      const localOrders = getStorage<Order[]>(`orders_${userId}`, []);
+      const localPurchases = getStorage<Purchase[]>(`purchases_${userId}`, []);
+      const localExpenses = getStorage<Expense[]>(`expenses_${userId}`, []);
+      const localTransfers = getStorage<TransferPaymentEntry[]>(`transfers_${userId}`, []);
+      const localCash = getStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+        userId,
         amount: 0,
         startDate: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString(),
       });
-      const localMemories = getStorage<TrajectoryMemory[]>(`trajectory_${targetUserId}`, []);
+      const localMemories = getStorage<TrajectoryMemory[]>(`trajectory_${userId}`, []);
 
-      // 4. Send all local data to cloud migrate endpoint (server merges with union)
       const migrateRes = await fetch('/api/sync/migrate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: targetUserId,
           products: localProducts,
           orders: localOrders,
           purchases: localPurchases,
@@ -347,17 +118,14 @@ export const syncService = {
           cashBalance: localCash,
           memories: localMemories,
         }),
-      }).catch(() => null);
+      });
 
-      if (migrateRes && migrateRes.ok) {
-        const data = await migrateRes.json().catch(() => null);
-        if (data && data.version) {
-          currentLocalVersion = data.version;
-        }
+      if (migrateRes.ok) {
+        const data = await migrateRes.json();
+        currentLocalVersion = data.version;
       }
 
-      // 5. Pull cloud data with non-destructive merge
-      await this.pull(targetUserId);
+      await this.pull(userId);
     } catch (err) {
       console.warn('Initial cloud sync notice:', err);
       emitSyncStatus('synced');
@@ -365,88 +133,50 @@ export const syncService = {
   },
 
   async pull(userId: string) {
-    const targetUserId = userId || 'usr_owner_default';
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
 
     try {
       emitSyncStatus('syncing');
-      const res = await fetch(`/api/sync?userId=${encodeURIComponent(targetUserId)}`).catch(() => null);
+      const res = await fetch('/api/sync', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      if (!res || !res.ok) {
-        emitSyncStatus('synced');
+      if (!res.ok) {
+        emitSyncStatus('error');
         return;
       }
 
-      const data = await res.json().catch(() => null);
-      if (!data) {
-        emitSyncStatus('synced');
-        return;
+      const data = await res.json();
+      currentLocalVersion = data.version;
+
+      if (Array.isArray(data.products) && data.products.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `products_${userId}`, JSON.stringify(data.products));
       }
-
-      if (data.version) {
-        currentLocalVersion = data.version;
+      if (Array.isArray(data.orders) && data.orders.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `orders_${userId}`, JSON.stringify(data.orders));
       }
-
-      let hasLocalPendingPush = false;
-
-      // Smart merge: NEVER wipe non-empty local items if remote is empty
-      if (Array.isArray(data.products)) {
-        const localProds = getStorage<Product[]>(`products_${targetUserId}`, []);
-        const mergedProds = mergeLocalAndRemote(localProds, data.products);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `products_${targetUserId}`, JSON.stringify(mergedProds));
-        if (mergedProds.length > data.products.length) hasLocalPendingPush = true;
+      if (Array.isArray(data.purchases) && data.purchases.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `purchases_${userId}`, JSON.stringify(data.purchases));
       }
-
-      if (Array.isArray(data.orders)) {
-        const localOrders = getStorage<Order[]>(`orders_${targetUserId}`, []);
-        const mergedOrders = mergeLocalAndRemote(localOrders, data.orders);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `orders_${targetUserId}`, JSON.stringify(mergedOrders));
-        if (mergedOrders.length > data.orders.length) hasLocalPendingPush = true;
+      if (Array.isArray(data.expenses) && data.expenses.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `expenses_${userId}`, JSON.stringify(data.expenses));
       }
-
-      if (Array.isArray(data.purchases)) {
-        const localPurchases = getStorage<Purchase[]>(`purchases_${targetUserId}`, []);
-        const mergedPurchases = mergeLocalAndRemote(localPurchases, data.purchases);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `purchases_${targetUserId}`, JSON.stringify(mergedPurchases));
-        if (mergedPurchases.length > data.purchases.length) hasLocalPendingPush = true;
+      if (Array.isArray(data.transfers) && data.transfers.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `transfers_${userId}`, JSON.stringify(data.transfers));
       }
-
-      if (Array.isArray(data.expenses)) {
-        const localExpenses = getStorage<Expense[]>(`expenses_${targetUserId}`, []);
-        const mergedExpenses = mergeLocalAndRemote(localExpenses, data.expenses);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `expenses_${targetUserId}`, JSON.stringify(mergedExpenses));
-        if (mergedExpenses.length > data.expenses.length) hasLocalPendingPush = true;
+      if (data.cashBalance) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `cash_initial_${userId}`, JSON.stringify(data.cashBalance));
       }
-
-      if (Array.isArray(data.transfers)) {
-        const localTransfers = getStorage<TransferPaymentEntry[]>(`transfers_${targetUserId}`, []);
-        const mergedTransfers = mergeLocalAndRemote(localTransfers, data.transfers);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `transfers_${targetUserId}`, JSON.stringify(mergedTransfers));
-        if (mergedTransfers.length > data.transfers.length) hasLocalPendingPush = true;
-      }
-
-      if (data.cashBalance && data.cashBalance.amount !== undefined) {
-        const localCash = getStorage<CashInitialBalance | null>(`cash_initial_${targetUserId}`, null);
-        if (!localCash || (data.cashBalance.updatedAt || '') >= (localCash.updatedAt || '')) {
-          localStorage.setItem(STORAGE_KEY_PREFIX + `cash_initial_${targetUserId}`, JSON.stringify(data.cashBalance));
-        }
-      }
-
-      if (Array.isArray(data.memories)) {
-        const localMemories = getStorage<TrajectoryMemory[]>(`trajectory_${targetUserId}`, []);
-        const mergedMemories = mergeLocalAndRemote(localMemories, data.memories);
-        localStorage.setItem(STORAGE_KEY_PREFIX + `trajectory_${targetUserId}`, JSON.stringify(mergedMemories));
+      if (Array.isArray(data.memories) && data.memories.length > 0) {
+        localStorage.setItem(STORAGE_KEY_PREFIX + `trajectory_${userId}`, JSON.stringify(data.memories));
       }
 
       emitChange();
       emitSyncStatus('synced');
-
-      // If device had records not yet registered on server, push them
-      if (hasLocalPendingPush) {
-        this.push(targetUserId);
-      }
     } catch (err) {
       console.warn('Pull sync error:', err);
-      emitSyncStatus('synced');
+      emitSyncStatus('error');
     }
   },
 
@@ -459,57 +189,62 @@ export const syncService = {
   },
 
   async push(userId: string) {
-    const targetUserId = userId || 'usr_owner_default';
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) {
+      emitSyncStatus('synced');
+      return;
+    }
 
     try {
       const payload = {
-        userId: targetUserId,
-        products: getStorage<Product[]>(`products_${targetUserId}`, []),
-        orders: getStorage<Order[]>(`orders_${targetUserId}`, []),
-        purchases: getStorage<Purchase[]>(`purchases_${targetUserId}`, []),
-        expenses: getStorage<Expense[]>(`expenses_${targetUserId}`, []),
-        transfers: getStorage<TransferPaymentEntry[]>(`transfers_${targetUserId}`, []),
-        cashBalance: getStorage<CashInitialBalance>(`cash_initial_${targetUserId}`, {
-          userId: targetUserId,
+        products: getStorage<Product[]>(`products_${userId}`, []),
+        orders: getStorage<Order[]>(`orders_${userId}`, []),
+        purchases: getStorage<Purchase[]>(`purchases_${userId}`, []),
+        expenses: getStorage<Expense[]>(`expenses_${userId}`, []),
+        transfers: getStorage<TransferPaymentEntry[]>(`transfers_${userId}`, []),
+        cashBalance: getStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+          userId,
           amount: 0,
           startDate: new Date().toISOString().split('T')[0],
           updatedAt: new Date().toISOString(),
         }),
-        memories: getStorage<TrajectoryMemory[]>(`trajectory_${targetUserId}`, []),
+        memories: getStorage<TrajectoryMemory[]>(`trajectory_${userId}`, []),
       };
 
       const res = await fetch('/api/sync', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
-      }).catch(() => null);
+      });
 
-      if (res && res.ok) {
-        const data = await res.json().catch(() => null);
-        if (data && data.version) {
-          currentLocalVersion = data.version;
-        }
+      if (res.ok) {
+        const data = await res.json();
+        currentLocalVersion = data.version;
         emitSyncStatus('synced');
       } else {
-        emitSyncStatus('synced');
+        emitSyncStatus('error');
       }
     } catch (err) {
-      console.warn('Push sync notice:', err);
-      emitSyncStatus('synced');
+      console.warn('Push sync error:', err);
+      emitSyncStatus('error');
     }
   },
 
   async checkRemoteChanges(userId: string) {
-    const targetUserId = userId || 'usr_owner_default';
+    const token = localStorage.getItem('lucraibr_auth_session_token');
+    if (!token) return;
 
     try {
-      const res = await fetch(`/api/sync/version?userId=${encodeURIComponent(targetUserId)}`).catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json().catch(() => null);
-        if (data && data.version && data.version > currentLocalVersion) {
-          await this.pull(targetUserId);
+      const res = await fetch('/api/sync/version', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const { version } = await res.json();
+        if (version > currentLocalVersion) {
+          await this.pull(userId);
         }
       }
     } catch {
@@ -948,57 +683,48 @@ function getInitialProducts(userId: string): Product[] {
   ];
 }
 
-// Ensure the user's data exists and is initialized without overwriting existing data
+// Ensure the user's data exists and is initialized
 export function initUserDatabase(userId: string): void {
   const isInitialized = getStorage<boolean>(`init_${userId}`, false);
   if (!isInitialized) {
-    // Check if user or device already has data before inserting demo data
-    const existingProds = getStorage<Product[]>(`products_${userId}`, []);
-    const existingOrders = getStorage<Order[]>(`orders_${userId}`, []);
-    const existingPurchases = getStorage<Purchase[]>(`purchases_${userId}`, []);
-    const existingExpenses = getStorage<Expense[]>(`expenses_${userId}`, []);
-
-    // ONLY insert demo initial data if user has completely zero existing items!
-    if (existingProds.length === 0 && existingOrders.length === 0 && existingPurchases.length === 0 && existingExpenses.length === 0) {
-      setStorage(`products_${userId}`, getInitialProducts(userId));
-      setStorage(`orders_${userId}`, getInitialOrders(userId));
-      setStorage(`purchases_${userId}`, getInitialPurchases(userId));
-      setStorage(`expenses_${userId}`, getInitialExpenses(userId));
-      setStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+    setStorage(`products_${userId}`, getInitialProducts(userId));
+    setStorage(`orders_${userId}`, getInitialOrders(userId));
+    setStorage(`purchases_${userId}`, getInitialPurchases(userId));
+    setStorage(`expenses_${userId}`, getInitialExpenses(userId));
+    setStorage<CashInitialBalance>(`cash_initial_${userId}`, {
+      userId,
+      amount: 500.0, // Saldo inicial parametrizado pelo usuário
+      startDate: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0],
+      updatedAt: new Date().toISOString(),
+    });
+    setStorage<TransferPaymentEntry[]>(`transfer_entries_${userId}`, [
+      {
+        id: 'trans_entry_1',
+        orderId: 'ord_1',
         userId,
-        amount: 500.0, // Saldo inicial parametrizado pelo usuário
-        startDate: new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0],
-        updatedAt: new Date().toISOString(),
-      });
-      setStorage<TransferPaymentEntry[]>(`transfer_entries_${userId}`, [
-        {
-          id: 'trans_entry_1',
-          orderId: 'ord_1',
-          userId,
-          amount: 142.04,
-          receivedDate: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0],
-          paymentType: 'integral',
-          notes: 'Repasse integral confirmado',
-          createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-        },
-        {
-          id: 'trans_entry_2',
-          orderId: 'ord_4',
-          userId,
-          amount: 194.5,
-          receivedDate: new Date().toISOString().split('T')[0],
-          paymentType: 'divergente',
-          notes: 'Recebido com desconto de taxa',
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-    }
+        amount: 142.04,
+        receivedDate: new Date(Date.now() - 3 * 86400000).toISOString().split('T')[0],
+        paymentType: 'integral',
+        notes: 'Repasse integral confirmado',
+        createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      },
+      {
+        id: 'trans_entry_2',
+        orderId: 'ord_4',
+        userId,
+        amount: 194.5,
+        receivedDate: new Date().toISOString().split('T')[0],
+        paymentType: 'divergente',
+        notes: 'Recebido com desconto de taxa',
+        createdAt: new Date().toISOString(),
+      },
+    ]);
     setStorage(`init_${userId}`, true);
   } else {
-    // If user was initialized and products key is completely undefined, initialize empty array
+    // If user was initialized before products feature was added, ensure products array exists
     const existingProds = getStorage<Product[] | null>(`products_${userId}`, null);
-    if (existingProds === null) {
-      setStorage(`products_${userId}`, []);
+    if (!existingProds) {
+      setStorage(`products_${userId}`, getInitialProducts(userId));
     }
   }
 }

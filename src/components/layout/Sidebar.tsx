@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'cashflow', label: 'Fluxo de caixa', icon: ArrowLeftRight },
     { id: 'expenses', label: 'Despesas e gastos', icon: CreditCard },
     { id: 'import', label: 'Importação de planilhas', icon: FileSpreadsheet },
-    { id: 'account', label: 'Minha operação & backup', icon: ShieldCheck },
+    { id: 'account', label: 'Minha conta e segurança', icon: ShieldCheck },
   ];
 
   return (

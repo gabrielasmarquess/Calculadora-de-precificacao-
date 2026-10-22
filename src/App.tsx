@@ -4,19 +4,12 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { DEFAULT_USER, authService, subscribeToAuth } from './services/auth';
-import {
-  subscribeToDB,
-  computeFinancialSummary,
-  ordersRepo,
-  purchasesRepo,
-  productsRepo,
-  syncService,
-  detectAndPreserveAllDeviceData,
-} from './services/db';
-import { UserProfile, Product } from './types/finance';
+import { authService, subscribeToAuth } from './services/auth';
+import { subscribeToDB, computeFinancialSummary, ordersRepo, purchasesRepo, syncService } from './services/db';
+import { UserProfile } from './types/finance';
 import { Navbar } from './components/layout/Navbar';
 import { Sidebar, NavSection } from './components/layout/Sidebar';
+import { AuthModal } from './components/auth/AuthModal';
 
 // Pages
 import { DashboardPage } from './pages/DashboardPage';
@@ -29,6 +22,8 @@ import { CashFlowPage } from './pages/CashFlowPage';
 import { ExpensesPage } from './pages/ExpensesPage';
 import { ImportPage } from './pages/ImportPage';
 import { AccountPage } from './pages/AccountPage';
+import { productsRepo } from './services/db';
+import { Product } from './types/finance';
 
 const sectionTitles: Record<NavSection, string> = {
   dashboard: 'Dashboard Geral',
@@ -40,11 +35,11 @@ const sectionTitles: Record<NavSection, string> = {
   cashflow: 'Fluxo de Caixa',
   expenses: 'Despesas Operacionais',
   import: 'Importação de Planilhas',
-  account: 'Minha Operação & Configurações',
+  account: 'Minha Conta & Segurança',
 };
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<UserProfile>(() =>
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(() =>
     authService.getCurrentUser()
   );
   const [currentSection, setCurrentSection] = useState<NavSection>('dashboard');
@@ -52,20 +47,23 @@ export default function App() {
   const [dbVersion, setDbVersion] = useState(0);
   const [selectedProductForSale, setSelectedProductForSale] = useState<Product | null>(null);
 
-  // Auto-detect and preserve all device data & initialize sync on mount
+  // Check server session on mount and initialize sync
   useEffect(() => {
-    try {
-      detectAndPreserveAllDeviceData(currentUser.id);
-      syncService.setActiveUser(currentUser.id);
-    } catch (e) {
-      console.warn('Initial sync notice:', e);
-    }
-  }, [currentUser.id]);
+    authService.checkServerSession().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        syncService.setActiveUser(user.id);
+      }
+    });
+  }, []);
 
-  // Subscribe to auth/profile changes
+  // Subscribe to auth state
   useEffect(() => {
     return subscribeToAuth((user) => {
-      if (user) setCurrentUser(user);
+      setCurrentUser(user);
+      if (user) {
+        syncService.setActiveUser(user.id);
+      }
     });
   }, []);
 
@@ -79,42 +77,57 @@ export default function App() {
   const refreshUser = useCallback(() => {
     const user = authService.getCurrentUser();
     setCurrentUser(user);
-    syncService.setActiveUser(user.id);
+    if (user) {
+      syncService.setActiveUser(user.id);
+    }
   }, []);
 
   // Financial summary computation
   const summary = useMemo(() => {
+    if (!currentUser) {
+      return { currentAvailableCash: 0, projectedCash: 0 };
+    }
     return computeFinancialSummary(currentUser.id);
-  }, [currentUser.id, dbVersion]);
+  }, [currentUser, dbVersion]);
 
   // Badges for sidebar
   const pendingTransfersCount = useMemo(() => {
+    if (!currentUser) return 0;
     const orders = ordersRepo.list(currentUser.id);
-    return orders.filter(
-      (o) => o.transferStatus === 'pendente' || o.transferStatus === 'recebido_parcial'
-    ).length;
-  }, [currentUser.id, dbVersion]);
+    return orders.filter((o) => o.transferStatus === 'pendente' || o.transferStatus === 'recebido_parcial').length;
+  }, [currentUser, dbVersion]);
 
   const pendingPurchasesCount = useMemo(() => {
+    if (!currentUser) return 0;
     const orders = ordersRepo.list(currentUser.id);
-    return orders.filter(
-      (o) => o.logisticStatus !== 'pedido_cancelado' && o.items.some((i) => !i.isPurchased)
-    ).length;
-  }, [currentUser.id, dbVersion]);
+    return orders.filter((o) => o.logisticStatus !== 'pedido_cancelado' && o.items.some((i) => !i.isPurchased)).length;
+  }, [currentUser, dbVersion]);
 
   const productsCount = useMemo(() => {
+    if (!currentUser) return 0;
     return productsRepo.list(currentUser.id, false).length;
-  }, [currentUser.id, dbVersion]);
+  }, [currentUser, dbVersion]);
+
+  const handleLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+  };
+
+  // If user is not authenticated, show Auth modal
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-[#F8FAF9] flex items-center justify-center">
+        <AuthModal onSuccess={refreshUser} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] text-slate-800 flex">
       {/* 1. Sidebar */}
       <Sidebar
         currentSection={currentSection}
-        onSelectSection={(sec) => {
-          setIsSidebarOpen(false);
-          setCurrentSection(sec);
-        }}
+        onSelectSection={(sec) => setCurrentSection(sec)}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         pendingTransfersCount={pendingTransfersCount}
@@ -127,11 +140,11 @@ export default function App() {
         {/* Navbar */}
         <Navbar
           currentUser={currentUser}
-          currentSectionTitle={sectionTitles[currentSection] || 'Plataforma'}
+          currentSectionTitle={sectionTitles[currentSection]}
           availableCash={summary.currentAvailableCash}
           projectedCash={summary.projectedCash}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-          onLogout={() => refreshUser()}
+          onLogout={handleLogout}
           onNavigateToAccount={() => setCurrentSection('account')}
         />
 
@@ -194,7 +207,7 @@ export default function App() {
           {currentSection === 'account' && (
             <AccountPage
               currentUser={currentUser}
-              onLogout={() => refreshUser()}
+              onLogout={handleLogout}
               onProfileUpdated={refreshUser}
             />
           )}

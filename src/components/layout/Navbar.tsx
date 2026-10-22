@@ -132,20 +132,29 @@ export const Navbar: React.FC<NavbarProps> = ({
         <button
           type="button"
           onClick={onNavigateToAccount}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700 transition-colors text-left cursor-pointer"
-          title="Minha Operação & Configurações"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-slate-100 text-slate-700 transition-colors text-left"
+          title="Minha Conta & Segurança"
         >
           <div className="w-8 h-8 rounded-full bg-emerald-100 text-[#064E3B] font-bold text-xs flex items-center justify-center">
             {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
           </div>
           <div className="hidden sm:block">
-            <p className="text-xs font-semibold text-slate-900 leading-tight truncate max-w-[140px]">
+            <p className="text-xs font-semibold text-slate-900 leading-tight truncate max-w-[120px]">
               {currentUser.name}
             </p>
-            <p className="text-[11px] text-slate-500 leading-tight truncate max-w-[140px]">
+            <p className="text-[11px] text-slate-500 leading-tight truncate max-w-[120px]">
               {currentUser.companyName || 'Vendedor'}
             </p>
           </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+          title="Sair da conta"
+        >
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </header>

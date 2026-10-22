@@ -2,6 +2,7 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,174 +10,685 @@ const __dirname = path.dirname(__filename);
 
 const DATA_DIR = path.resolve(__dirname, 'data');
 const DB_FILE = path.join(DATA_DIR, 'cloud_db.json');
-const BACKUP_FILE = path.join(DATA_DIR, 'cloud_db.backup.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-export interface CloudDatabase {
-  users: any[];
-  sessions: any[];
-  pending2FACodes: any[];
-  passwordResetCodes: any[];
-  securityLogs: any[];
-  products: Record<string, any[]>;
-  orders: Record<string, any[]>;
-  purchases: Record<string, any[]>;
-  expenses: Record<string, any[]>;
-  transfers: Record<string, any[]>;
-  cashBalances: Record<string, any>;
-  memories: Record<string, any[]>;
-  versions: Record<string, number>;
+interface UserRecord {
+  id: string;
+  email: string;
+  name: string;
+  companyName?: string;
+  passwordHash?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  createdAt: string;
 }
 
-const DEFAULT_USER_ID = 'usr_owner_default';
-const DEFAULT_USER = {
-  id: DEFAULT_USER_ID,
-  email: 'gabrielasousamarquess2@gmail.com',
-  name: 'Gabriela Marques',
-  companyName: 'LucraiBR Vendas Online',
-  role: 'admin',
-  status: 'active',
-  twoFactorEnabled: false,
-  createdAt: '2026-10-21T00:51:29.038Z',
-};
+interface TwoFactorPendingToken {
+  id: string;
+  userId: string;
+  code: string;
+  expiresAt: number;
+  used: boolean;
+}
 
-// Database persistence with atomic write
-let isSaving = false;
-let saveQueuePending = false;
+interface SessionRecord {
+  id: string;
+  userId: string;
+  token: string;
+  deviceType: 'Computador' | 'Smartphone' | 'Tablet';
+  browser: string;
+  os: string;
+  ip: string;
+  approxLocation: string;
+  loginTime: string;
+  lastActive: string;
+  isActive: boolean;
+}
+
+interface SecurityLogRecord {
+  id: string;
+  userId: string;
+  timestamp: string;
+  action: 'login' | 'logout' | 'password_change' | '2fa_enabled' | '2fa_disabled' | 'session_terminated' | 'all_sessions_terminated' | 'sync';
+  details: string;
+  ip?: string;
+  device?: string;
+}
+
+interface CloudDatabase {
+  users: UserRecord[];
+  sessions: SessionRecord[];
+  pending2FACodes: TwoFactorPendingToken[];
+  securityLogs: SecurityLogRecord[];
+  products: Record<string, any[]>; // userId -> products
+  orders: Record<string, any[]>; // userId -> orders
+  purchases: Record<string, any[]>; // userId -> purchases
+  expenses: Record<string, any[]>; // userId -> expenses
+  transfers: Record<string, any[]>; // userId -> transfers
+  cashBalances: Record<string, any>; // userId -> initial balance
+  memories: Record<string, any[]>; // userId -> memories
+  versions: Record<string, number>; // userId -> data version
+}
 
 function loadDatabase(): CloudDatabase {
-  let loadedDB: Partial<CloudDatabase> | null = null;
-
-  if (fs.existsSync(DB_FILE)) {
-    try {
+  try {
+    if (fs.existsSync(DB_FILE)) {
       const content = fs.readFileSync(DB_FILE, 'utf-8');
-      loadedDB = JSON.parse(content);
-    } catch (err) {
-      console.error('Error reading cloud_db.json, attempting backup recovery:', err);
+      return JSON.parse(content);
     }
+  } catch (err) {
+    console.error('Error loading cloud_db.json, initializing empty DB:', err);
   }
 
-  if (!loadedDB && fs.existsSync(BACKUP_FILE)) {
-    try {
-      const content = fs.readFileSync(BACKUP_FILE, 'utf-8');
-      loadedDB = JSON.parse(content);
-      console.log('Recovered database state from cloud_db.backup.json');
-    } catch (backupErr) {
-      console.error('Backup recovery failed:', backupErr);
-    }
-  }
-
-  const initialDB: CloudDatabase = {
-    users: loadedDB?.users || [DEFAULT_USER],
-    sessions: loadedDB?.sessions || [],
-    pending2FACodes: loadedDB?.pending2FACodes || [],
-    passwordResetCodes: loadedDB?.passwordResetCodes || [],
-    securityLogs: loadedDB?.securityLogs || [],
-    products: loadedDB?.products || {},
-    orders: loadedDB?.orders || {},
-    purchases: loadedDB?.purchases || {},
-    expenses: loadedDB?.expenses || {},
-    transfers: loadedDB?.transfers || {},
-    cashBalances: loadedDB?.cashBalances || {},
-    memories: loadedDB?.memories || {},
-    versions: loadedDB?.versions || {},
+  // Initial seed
+  const defaultUser: UserRecord = {
+    id: 'usr_owner_default',
+    email: 'gabrielasousamarquess2@gmail.com',
+    name: 'Gabriela Marques',
+    companyName: 'LucraiBR Vendas Online',
+    twoFactorEnabled: false,
+    createdAt: new Date().toISOString(),
   };
 
-  if (!initialDB.users.some((u) => u.id === DEFAULT_USER_ID)) {
-    initialDB.users.unshift(DEFAULT_USER);
-  }
+  const initialDB: CloudDatabase = {
+    users: [defaultUser],
+    sessions: [],
+    pending2FACodes: [],
+    securityLogs: [
+      {
+        id: 'log_seed_1',
+        userId: defaultUser.id,
+        timestamp: new Date().toISOString(),
+        action: 'login',
+        details: 'Conta inicial Gabriela Marques pronta para sincronização na nuvem',
+        device: 'Servidor Nuvem LucraiBR',
+      },
+    ],
+    products: {},
+    orders: {},
+    purchases: {},
+    expenses: {},
+    transfers: {},
+    cashBalances: {},
+    memories: {},
+    versions: {},
+  };
 
   saveDatabase(initialDB);
   return initialDB;
 }
 
-function saveDatabase(database: CloudDatabase): void {
-  if (isSaving) {
-    saveQueuePending = true;
-    return;
-  }
-
-  isSaving = true;
-
+function saveDatabase(db: CloudDatabase): void {
   try {
-    const serialized = JSON.stringify(database, null, 2);
     const tempFile = DB_FILE + '.tmp';
-
-    fs.writeFileSync(tempFile, serialized, 'utf-8');
+    fs.writeFileSync(tempFile, JSON.stringify(db, null, 2), 'utf-8');
     fs.renameSync(tempFile, DB_FILE);
-    fs.writeFileSync(BACKUP_FILE, serialized, 'utf-8');
   } catch (err) {
-    console.error('Error writing cloud_db.json:', err);
-  } finally {
-    isSaving = false;
-    if (saveQueuePending) {
-      saveQueuePending = false;
-      saveDatabase(db);
-    }
+    console.error('Error saving cloud_db.json:', err);
   }
 }
 
 let db = loadDatabase();
 
+function parseDeviceInfo(userAgent: string = '', ip: string = '') {
+  let deviceType: 'Computador' | 'Smartphone' | 'Tablet' = 'Computador';
+  if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+    deviceType = 'Tablet';
+  } else if (/mobile|iphone|ipod|android|blackberry|opera mini|iemobile/i.test(userAgent)) {
+    deviceType = 'Smartphone';
+  }
+
+  let browser = 'Navegador Web';
+  if (/edg/i.test(userAgent)) browser = 'Microsoft Edge';
+  else if (/chrome|crios/i.test(userAgent)) browser = 'Google Chrome';
+  else if (/firefox|fxios/i.test(userAgent)) browser = 'Mozilla Firefox';
+  else if (/safari/i.test(userAgent) && !/chrome/i.test(userAgent)) browser = 'Apple Safari';
+  else if (/opera|opr/i.test(userAgent)) browser = 'Opera';
+
+  let os = 'Sistema Operacional';
+  if (/windows/i.test(userAgent)) os = 'Windows';
+  else if (/android/i.test(userAgent)) os = 'Android';
+  else if (/iphone|ipad|ipod/i.test(userAgent)) os = 'iOS';
+  else if (/macintosh|mac os x/i.test(userAgent)) os = 'macOS';
+  else if (/linux/i.test(userAgent)) os = 'Linux';
+
+  const approxLocation = 'São Paulo, Brasil (Conexão Segura SSL)';
+
+  return { deviceType, browser, os, approxLocation };
+}
+
+function authenticateToken(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Token de autenticação não fornecido' });
+  }
+
+  const token = authHeader.substring(7).trim();
+  const session = db.sessions.find((s) => s.token === token && s.isActive);
+
+  if (!session) {
+    return res.status(401).json({ error: 'Sessão inválida ou encerrada pelo servidor' });
+  }
+
+  // Update lastActive
+  session.lastActive = new Date().toISOString();
+  (req as any).user = db.users.find((u) => u.id === session.userId);
+  (req as any).session = session;
+  next();
+}
+
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT || 3000);
+  const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
-  app.set('trust proxy', 1);
+  app.use(express.json({ limit: '25mb' }));
 
-  // CORS Middleware allowing cross-origin calls from mobile or web views
-  app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-    if (req.method === 'OPTIONS') {
-      return res.sendStatus(200);
-    }
-    next();
+  // API Health & Status
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  app.use(express.json({ limit: '50mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  // 1. AUTH ROUTES
+  app.post('/api/auth/register', (req, res) => {
+    const { name, email, companyName, password } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Nome e e-mail são obrigatórios.' });
+    }
 
-  // Health check
-  app.get('/api/health', (req, res) => {
-    res.json({
-      status: 'ok',
-      app: 'LucraiBR Vendas Online',
-      accessMode: 'direct',
+    const cleanEmail = email.trim().toLowerCase();
+    const existing = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      return res.status(400).json({ error: 'Este e-mail já está cadastrado.' });
+    }
+
+    const newUser: UserRecord = {
+      id: 'usr_' + Date.now() + '_' + crypto.randomBytes(3).toString('hex'),
+      name: name.trim(),
+      email: cleanEmail,
+      companyName: companyName?.trim() || 'Minha Operação Marketplace',
+      passwordHash: password ? crypto.createHash('sha256').update(password).digest('hex') : undefined,
+      twoFactorEnabled: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    db.users.push(newUser);
+
+    // Create session
+    const token = 'tok_' + crypto.randomBytes(24).toString('hex');
+    const userAgent = req.headers['user-agent'] || '';
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+    const { deviceType, browser, os, approxLocation } = parseDeviceInfo(userAgent, ip);
+
+    const session: SessionRecord = {
+      id: 'sess_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
+      userId: newUser.id,
+      token,
+      deviceType,
+      browser: `${browser} (${os})`,
+      os,
+      ip,
+      approxLocation,
+      loginTime: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
+      isActive: true,
+    };
+
+    db.sessions.push(session);
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: newUser.id,
       timestamp: new Date().toISOString(),
+      action: 'login',
+      details: `Conta criada e primeiro acesso via ${deviceType} (${browser})`,
+      device: `${deviceType} - ${browser}`,
+    });
+
+    saveDatabase(db);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        companyName: newUser.companyName,
+        createdAt: newUser.createdAt,
+      },
+      session: {
+        id: session.id,
+        deviceType: session.deviceType,
+        browser: session.browser,
+        loginTime: session.loginTime,
+        lastActive: session.lastActive,
+        approxLocation: session.approxLocation,
+        isCurrentSession: true,
+      },
     });
   });
 
-  // Profile endpoints
-  app.get('/api/profile', (req, res) => {
-    const owner = db.users.find((u) => u.id === DEFAULT_USER_ID) || DEFAULT_USER;
-    res.json({ success: true, profile: owner });
-  });
-
-  app.put('/api/profile', (req, res) => {
-    const { name, companyName } = req.body;
-    let owner = db.users.find((u) => u.id === DEFAULT_USER_ID);
-    if (!owner) {
-      owner = { ...DEFAULT_USER };
-      db.users.unshift(owner);
+  app.post('/api/auth/login', (req, res) => {
+    const { email, password } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'E-mail é obrigatório.' });
     }
-    if (name) owner.name = String(name).trim();
-    if (companyName !== undefined) owner.companyName = String(companyName).trim();
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = db.users.find((u) => u.email.toLowerCase() === cleanEmail);
+
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado. Crie uma conta para continuar.' });
+    }
+
+    // If password provided and user has password hash, check it
+    if (user.passwordHash && password) {
+      const hash = crypto.createHash('sha256').update(password).digest('hex');
+      if (hash !== user.passwordHash) {
+        return res.status(401).json({ error: 'Senha incorreta.' });
+      }
+    }
+
+    // Check if 2FA / Token is enabled
+    if (user.twoFactorEnabled) {
+      // Generate a single-use 6-digit verification code with 5-minute validity
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const tempToken = 'temp_' + crypto.randomBytes(16).toString('hex');
+      const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes
+
+      db.pending2FACodes.push({
+        id: tempToken,
+        userId: user.id,
+        code,
+        expiresAt,
+        used: false,
+      });
+
+      saveDatabase(db);
+
+      // Return requirement for 2FA token
+      return res.json({
+        requires2FA: true,
+        tempToken,
+        // In local/preview context, return active code so user can input it or view it
+        verificationCodeHint: code,
+        expiresInMinutes: 5,
+        message: 'Código de verificação de 6 dígitos gerado com sucesso.',
+      });
+    }
+
+    // Direct login without 2FA
+    const token = 'tok_' + crypto.randomBytes(24).toString('hex');
+    const userAgent = req.headers['user-agent'] || '';
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+    const { deviceType, browser, os, approxLocation } = parseDeviceInfo(userAgent, ip);
+
+    const session: SessionRecord = {
+      id: 'sess_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
+      userId: user.id,
+      token,
+      deviceType,
+      browser: `${browser} (${os})`,
+      os,
+      ip,
+      approxLocation,
+      loginTime: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
+      isActive: true,
+    };
+
+    db.sessions.push(session);
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'login',
+      details: `Login efetuado no ${deviceType} (${browser})`,
+      device: `${deviceType} - ${browser}`,
+    });
+
     saveDatabase(db);
-    res.json({ success: true, profile: owner });
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        companyName: user.companyName,
+        createdAt: user.createdAt,
+      },
+      session: {
+        id: session.id,
+        deviceType: session.deviceType,
+        browser: session.browser,
+        loginTime: session.loginTime,
+        lastActive: session.lastActive,
+        approxLocation: session.approxLocation,
+        isCurrentSession: true,
+      },
+    });
   });
 
-  // ==========================================
-  // SYNC & STORAGE API (Direct, Token-Free)
-  // ==========================================
+  // Verify 2FA code
+  app.post('/api/auth/verify-2fa', (req, res) => {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) {
+      return res.status(400).json({ error: 'Token temporário e código de verificação são obrigatórios.' });
+    }
 
-  // Pull data from cloud
-  app.get('/api/sync', (req, res) => {
-    const userId = (req.query.userId as string) || DEFAULT_USER_ID;
+    const pending = db.pending2FACodes.find((p) => p.id === tempToken);
+    if (!pending) {
+      return res.status(401).json({ error: 'Requisição de verificação expirada ou inexistente.' });
+    }
+
+    if (pending.used) {
+      return res.status(401).json({ error: 'Este código de uso único já foi utilizado. Solicite um novo.' });
+    }
+
+    if (Date.now() > pending.expiresAt) {
+      return res.status(401).json({ error: 'O código de verificação expirou (validade de 5 minutos excedida).' });
+    }
+
+    if (pending.code !== code.trim()) {
+      return res.status(401).json({ error: 'Código de verificação incorreto.' });
+    }
+
+    // Mark code as used immediately to prevent replay
+    pending.used = true;
+
+    const user = db.users.find((u) => u.id === pending.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const token = 'tok_' + crypto.randomBytes(24).toString('hex');
+    const userAgent = req.headers['user-agent'] || '';
+    const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '';
+    const { deviceType, browser, os, approxLocation } = parseDeviceInfo(userAgent, ip);
+
+    const session: SessionRecord = {
+      id: 'sess_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
+      userId: user.id,
+      token,
+      deviceType,
+      browser: `${browser} (${os})`,
+      os,
+      ip,
+      approxLocation,
+      loginTime: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
+      isActive: true,
+    };
+
+    db.sessions.push(session);
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'login',
+      details: `Acesso autenticado com 2FA com sucesso em ${deviceType}`,
+      device: `${deviceType} - ${browser}`,
+    });
+
+    saveDatabase(db);
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        companyName: user.companyName,
+        createdAt: user.createdAt,
+      },
+      session: {
+        id: session.id,
+        deviceType: session.deviceType,
+        browser: session.browser,
+        loginTime: session.loginTime,
+        lastActive: session.lastActive,
+        approxLocation: session.approxLocation,
+        isCurrentSession: true,
+      },
+    });
+  });
+
+  // Get current user profile & validate session
+  app.get('/api/auth/me', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const session = (req as any).session as SessionRecord;
+
+    res.json({
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        companyName: user.companyName,
+        createdAt: user.createdAt,
+        twoFactorEnabled: !!user.twoFactorEnabled,
+      },
+      session: {
+        id: session.id,
+        deviceType: session.deviceType,
+        browser: session.browser,
+        loginTime: session.loginTime,
+        lastActive: session.lastActive,
+        approxLocation: session.approxLocation,
+        isCurrentSession: true,
+      },
+    });
+  });
+
+  // Update profile
+  app.put('/api/auth/profile', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const { name, companyName } = req.body;
+
+    if (name) user.name = name.trim();
+    if (companyName !== undefined) user.companyName = companyName.trim();
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'login',
+      details: 'Perfil do vendedor atualizado',
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, user });
+  });
+
+  // Change password
+  app.post('/api/auth/password', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'A nova senha deve ter no mínimo 6 caracteres.' });
+    }
+
+    user.passwordHash = crypto.createHash('sha256').update(newPassword).digest('hex');
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'password_change',
+      details: 'Senha de acesso alterada pelo usuário',
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, message: 'Senha atualizada com sucesso.' });
+  });
+
+  // 2FA / Token Configuration
+  app.post('/api/auth/2fa/toggle', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const { enabled } = req.body;
+
+    user.twoFactorEnabled = !!enabled;
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: user.twoFactorEnabled ? '2fa_enabled' : '2fa_disabled',
+      details: user.twoFactorEnabled
+        ? 'Autenticação em dois fatores (token adicional) ATIVADA'
+        : 'Autenticação em dois fatores (token adicional) DESATIVADA',
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, twoFactorEnabled: user.twoFactorEnabled });
+  });
+
+  // Generate test / sensitive action 2FA code
+  app.post('/api/auth/2fa/generate-code', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const tempToken = 'action_' + crypto.randomBytes(16).toString('hex');
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+
+    db.pending2FACodes.push({
+      id: tempToken,
+      userId: user.id,
+      code,
+      expiresAt,
+      used: false,
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, tempToken, code, expiresInMinutes: 5 });
+  });
+
+  // Verify code for sensitive actions
+  app.post('/api/auth/2fa/verify-action', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const { tempToken, code } = req.body;
+
+    const pending = db.pending2FACodes.find((p) => p.id === tempToken && p.userId === user.id);
+    if (!pending || pending.used || Date.now() > pending.expiresAt || pending.code !== code.trim()) {
+      return res.status(401).json({ error: 'Código de autorização inválido ou expirado.' });
+    }
+
+    pending.used = true;
+    saveDatabase(db);
+    res.json({ success: true });
+  });
+
+  // SESSIONS MANAGEMENT (Painel privado de dispositivos conectados)
+  app.get('/api/auth/sessions', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const currentSession = (req as any).session as SessionRecord;
+
+    const activeSessions = db.sessions
+      .filter((s) => s.userId === user.id && s.isActive)
+      .map((s) => ({
+        id: s.id,
+        deviceType: s.deviceType,
+        browser: s.browser,
+        os: s.os,
+        loginTime: s.loginTime,
+        lastActive: s.lastActive,
+        approxLocation: s.approxLocation,
+        isCurrentSession: s.id === currentSession.id,
+      }))
+      .sort((a, b) => (b.isCurrentSession ? 1 : 0) - (a.isCurrentSession ? 1 : 0));
+
+    res.json({ sessions: activeSessions });
+  });
+
+  // Terminate a specific session
+  app.post('/api/auth/sessions/:sessionId/terminate', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const { sessionId } = req.params;
+
+    const sessionToTerminate = db.sessions.find(
+      (s) => s.id === sessionId && s.userId === user.id && s.isActive
+    );
+
+    if (!sessionToTerminate) {
+      return res.status(404).json({ error: 'Sessão não encontrada ou já inativa.' });
+    }
+
+    sessionToTerminate.isActive = false;
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'session_terminated',
+      details: `Sessão encerrada remotamente: ${sessionToTerminate.deviceType} (${sessionToTerminate.browser})`,
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, message: 'Dispositivo desconectado com sucesso.' });
+  });
+
+  // Terminate all other sessions
+  app.post('/api/auth/sessions/terminate-others', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const currentSession = (req as any).session as SessionRecord;
+
+    let terminatedCount = 0;
+    db.sessions.forEach((s) => {
+      if (s.userId === user.id && s.id !== currentSession.id && s.isActive) {
+        s.isActive = false;
+        terminatedCount++;
+      }
+    });
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: user.id,
+      timestamp: new Date().toISOString(),
+      action: 'all_sessions_terminated',
+      details: `Encerradas ${terminatedCount} outras sessões conectadas`,
+    });
+
+    saveDatabase(db);
+    res.json({ success: true, terminatedCount });
+  });
+
+  // Logout
+  app.post('/api/auth/logout', authenticateToken, (req, res) => {
+    const currentSession = (req as any).session as SessionRecord;
+    currentSession.isActive = false;
+
+    db.securityLogs.push({
+      id: 'log_' + Date.now(),
+      userId: currentSession.userId,
+      timestamp: new Date().toISOString(),
+      action: 'logout',
+      details: `Logout voluntário efetuado em ${currentSession.deviceType}`,
+    });
+
+    saveDatabase(db);
+    res.json({ success: true });
+  });
+
+  // Security & Audit Logs
+  app.get('/api/auth/logs', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const userLogs = db.securityLogs
+      .filter((l) => l.userId === user.id)
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+      .slice(0, 50);
+
+    res.json({ logs: userLogs });
+  });
+
+  // 2. DATA SYNCHRONIZATION API (PC <-> MOBILE)
+  // Pull all data
+  app.get('/api/sync', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const userId = user.id;
 
     res.json({
       version: db.versions[userId] || 1,
@@ -195,216 +707,73 @@ async function startServer() {
     });
   });
 
-  // Version check
-  app.get('/api/sync/version', (req, res) => {
-    const userId = (req.query.userId as string) || DEFAULT_USER_ID;
+  // Version check for fast lightweight polling
+  app.get('/api/sync/version', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const userId = user.id;
     res.json({ version: db.versions[userId] || 1 });
   });
 
-  // Push data from client
-  app.post('/api/sync', (req, res) => {
-    const userId = req.body.userId || DEFAULT_USER_ID;
+  // Push / Batch save from client
+  app.post('/api/sync', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const userId = user.id;
     const { products, orders, purchases, expenses, transfers, cashBalance, memories } = req.body;
 
-    const mergeServerItems = <T extends { id?: string; updatedAt?: string }>(
-      serverList: T[] = [],
-      clientList: T[] = []
-    ): T[] => {
-      const map = new Map<string, T>();
-      serverList.forEach((item, i) => map.set(item.id || `s_${i}`, { ...item, userId }));
-      clientList.forEach((item, i) => {
-        const key = item.id || `c_${i}`;
-        if (!map.has(key)) {
-          map.set(key, { ...item, userId });
-        } else {
-          const existing = map.get(key)!;
-          const clientTime = new Date(item.updatedAt || 0).getTime();
-          const serverTime = new Date(existing.updatedAt || 0).getTime();
-          if (clientTime >= serverTime) {
-            map.set(key, { ...item, userId });
-          }
-        }
-      });
-      return Array.from(map.values());
-    };
+    if (products !== undefined) db.products[userId] = products;
+    if (orders !== undefined) db.orders[userId] = orders;
+    if (purchases !== undefined) db.purchases[userId] = purchases;
+    if (expenses !== undefined) db.expenses[userId] = expenses;
+    if (transfers !== undefined) db.transfers[userId] = transfers;
+    if (cashBalance !== undefined) db.cashBalances[userId] = cashBalance;
+    if (memories !== undefined) db.memories[userId] = memories;
 
-    let hadChanges = false;
-
-    if (Array.isArray(products)) {
-      db.products[userId] = mergeServerItems(db.products[userId] || [], products);
-      hadChanges = true;
-    }
-    if (Array.isArray(orders)) {
-      db.orders[userId] = mergeServerItems(db.orders[userId] || [], orders);
-      hadChanges = true;
-    }
-    if (Array.isArray(purchases)) {
-      db.purchases[userId] = mergeServerItems(db.purchases[userId] || [], purchases);
-      hadChanges = true;
-    }
-    if (Array.isArray(expenses)) {
-      db.expenses[userId] = mergeServerItems(db.expenses[userId] || [], expenses);
-      hadChanges = true;
-    }
-    if (Array.isArray(transfers)) {
-      db.transfers[userId] = mergeServerItems(db.transfers[userId] || [], transfers);
-      hadChanges = true;
-    }
-    if (cashBalance) {
-      db.cashBalances[userId] = { ...cashBalance, userId };
-      hadChanges = true;
-    }
-    if (Array.isArray(memories)) {
-      db.memories[userId] = mergeServerItems(db.memories[userId] || [], memories);
-      hadChanges = true;
-    }
-
-    if (hadChanges) {
-      db.versions[userId] = (db.versions[userId] || 1) + 1;
-      saveDatabase(db);
-    }
+    db.versions[userId] = (db.versions[userId] || 1) + 1;
+    saveDatabase(db);
 
     res.json({ success: true, version: db.versions[userId] });
   });
 
-  // Safe migration endpoint: non-destructive merge of device records
-  app.post('/api/sync/migrate', (req, res) => {
-    const userId = req.body.userId || DEFAULT_USER_ID;
+  // Safe migration endpoint: if cloud has no records yet for this user, seed it from client's existing state
+  app.post('/api/sync/migrate', authenticateToken, (req, res) => {
+    const user = (req as any).user as UserRecord;
+    const userId = user.id;
     const { products, orders, purchases, expenses, transfers, cashBalance, memories } = req.body;
 
-    const mergeServerItems = <T extends { id?: string; updatedAt?: string }>(
-      serverList: T[] = [],
-      clientList: T[] = []
-    ): T[] => {
-      const map = new Map<string, T>();
-      serverList.forEach((item, i) => map.set(item.id || `s_${i}`, { ...item, userId }));
-      clientList.forEach((item, i) => {
-        const key = item.id || `c_${i}`;
-        if (!map.has(key)) {
-          map.set(key, { ...item, userId });
-        } else {
-          const existing = map.get(key)!;
-          const clientTime = new Date(item.updatedAt || 0).getTime();
-          const serverTime = new Date(existing.updatedAt || 0).getTime();
-          if (clientTime >= serverTime) {
-            map.set(key, { ...item, userId });
-          }
-        }
-      });
-      return Array.from(map.values());
-    };
+    let hasServerData =
+      (db.products[userId] && db.products[userId].length > 0) ||
+      (db.orders[userId] && db.orders[userId].length > 0) ||
+      (db.expenses[userId] && db.expenses[userId].length > 0);
 
-    let hadChanges = false;
-    if (Array.isArray(products) && products.length > 0) {
-      db.products[userId] = mergeServerItems(db.products[userId] || [], products);
-      hadChanges = true;
-    }
-    if (Array.isArray(orders) && orders.length > 0) {
-      db.orders[userId] = mergeServerItems(db.orders[userId] || [], orders);
-      hadChanges = true;
-    }
-    if (Array.isArray(purchases) && purchases.length > 0) {
-      db.purchases[userId] = mergeServerItems(db.purchases[userId] || [], purchases);
-      hadChanges = true;
-    }
-    if (Array.isArray(expenses) && expenses.length > 0) {
-      db.expenses[userId] = mergeServerItems(db.expenses[userId] || [], expenses);
-      hadChanges = true;
-    }
-    if (Array.isArray(transfers) && transfers.length > 0) {
-      db.transfers[userId] = mergeServerItems(db.transfers[userId] || [], transfers);
-      hadChanges = true;
-    }
-    if (cashBalance && cashBalance.amount > 0) {
-      db.cashBalances[userId] = { ...cashBalance, userId };
-      hadChanges = true;
-    }
-    if (Array.isArray(memories) && memories.length > 0) {
-      db.memories[userId] = mergeServerItems(db.memories[userId] || [], memories);
-      hadChanges = true;
-    }
+    if (!hasServerData) {
+      if (products && products.length > 0) db.products[userId] = products;
+      if (orders && orders.length > 0) db.orders[userId] = orders;
+      if (purchases && purchases.length > 0) db.purchases[userId] = purchases;
+      if (expenses && expenses.length > 0) db.expenses[userId] = expenses;
+      if (transfers && transfers.length > 0) db.transfers[userId] = transfers;
+      if (cashBalance) db.cashBalances[userId] = cashBalance;
+      if (memories && memories.length > 0) db.memories[userId] = memories;
 
-    if (hadChanges) {
       db.versions[userId] = (db.versions[userId] || 1) + 1;
       saveDatabase(db);
     }
 
     res.json({
       success: true,
-      migrated: hadChanges,
+      migrated: !hasServerData,
       version: db.versions[userId] || 1,
     });
   });
 
-  // ==========================================
-  // COMPATIBILITY ENDPOINTS
-  // Returns immediate 200 OK for any legacy auth requests from cached tabs
-  // ==========================================
-  app.all('/api/auth/*', (req, res) => {
-    const owner = db.users.find((u) => u.id === DEFAULT_USER_ID) || DEFAULT_USER;
-    res.json({
-      success: true,
-      token: 'direct_access_mode',
-      user: owner,
-      sessions: [],
-      logs: [],
-      message: 'Acesso direto liberado sem exigência de autenticação.',
-    });
-  });
-
-  app.all('/api/admin/*', (req, res) => {
-    res.json({
-      success: true,
-      users: db.users,
-      logs: [],
-    });
-  });
-
-  // Reset all application data
-  app.post('/api/reset-data', (req, res) => {
-    console.log('Resetting database...');
-    db = {
-      users: [DEFAULT_USER],
-      sessions: [],
-      pending2FACodes: [],
-      passwordResetCodes: [],
-      securityLogs: [],
-      products: {},
-      orders: {},
-      purchases: {},
-      expenses: {},
-      transfers: {},
-      cashBalances: {},
-      memories: {},
-      versions: {},
-    };
-    saveDatabase(db);
-    res.json({ success: true });
-  });
-
-  // ==========================================
-  // FRONTEND CLIENT SERVING
-  // ==========================================
-  const distPath = path.resolve(__dirname, 'dist');
-  const indexHtmlExists = fs.existsSync(path.join(distPath, 'index.html'));
-  const isCloudRun = !!process.env.K_SERVICE || !!process.env.K_REVISION;
-  const isProduction =
-    process.env.NODE_ENV === 'production' ||
-    process.env.npm_lifecycle_event === 'start' ||
-    isCloudRun ||
-    (indexHtmlExists && process.env.npm_lifecycle_event !== 'dev');
-
-  if (isProduction && indexHtmlExists) {
-    console.log('LucraiBR: Servindo arquivos estáticos de produção a partir de /dist');
+  // Serve Frontend
+  if (process.env.NODE_ENV === 'production') {
+    const distPath = path.resolve(__dirname, 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: `Rota de API não encontrada: ${req.method} ${req.path}` });
-      }
       res.sendFile(path.resolve(distPath, 'index.html'));
     });
   } else {
-    // Mount Vite dev server middleware in local development
+    // Mount Vite dev server middleware
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -413,7 +782,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`LucraiBR server listening on port ${PORT} (Direct Access Mode)`);
+    console.log(`LucraiBR server listening on port ${PORT}`);
   });
 }
 
