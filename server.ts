@@ -206,30 +206,63 @@ async function startServer() {
     const userId = req.body.userId || DEFAULT_USER_ID;
     const { products, orders, purchases, expenses, transfers, cashBalance, memories } = req.body;
 
+    const mergeServerItems = <T extends { id?: string; updatedAt?: string }>(
+      serverList: T[] = [],
+      clientList: T[] = []
+    ): T[] => {
+      const map = new Map<string, T>();
+      serverList.forEach((item, i) => map.set(item.id || `s_${i}`, { ...item, userId }));
+      clientList.forEach((item, i) => {
+        const key = item.id || `c_${i}`;
+        if (!map.has(key)) {
+          map.set(key, { ...item, userId });
+        } else {
+          const existing = map.get(key)!;
+          const clientTime = new Date(item.updatedAt || 0).getTime();
+          const serverTime = new Date(existing.updatedAt || 0).getTime();
+          if (clientTime >= serverTime) {
+            map.set(key, { ...item, userId });
+          }
+        }
+      });
+      return Array.from(map.values());
+    };
+
+    let hadChanges = false;
+
     if (Array.isArray(products)) {
-      db.products[userId] = products.map((item) => ({ ...item, userId }));
+      db.products[userId] = mergeServerItems(db.products[userId] || [], products);
+      hadChanges = true;
     }
     if (Array.isArray(orders)) {
-      db.orders[userId] = orders.map((item) => ({ ...item, userId }));
+      db.orders[userId] = mergeServerItems(db.orders[userId] || [], orders);
+      hadChanges = true;
     }
     if (Array.isArray(purchases)) {
-      db.purchases[userId] = purchases.map((item) => ({ ...item, userId }));
+      db.purchases[userId] = mergeServerItems(db.purchases[userId] || [], purchases);
+      hadChanges = true;
     }
     if (Array.isArray(expenses)) {
-      db.expenses[userId] = expenses.map((item) => ({ ...item, userId }));
+      db.expenses[userId] = mergeServerItems(db.expenses[userId] || [], expenses);
+      hadChanges = true;
     }
     if (Array.isArray(transfers)) {
-      db.transfers[userId] = transfers.map((item) => ({ ...item, userId }));
+      db.transfers[userId] = mergeServerItems(db.transfers[userId] || [], transfers);
+      hadChanges = true;
     }
     if (cashBalance) {
       db.cashBalances[userId] = { ...cashBalance, userId };
+      hadChanges = true;
     }
     if (Array.isArray(memories)) {
-      db.memories[userId] = memories.map((item) => ({ ...item, userId }));
+      db.memories[userId] = mergeServerItems(db.memories[userId] || [], memories);
+      hadChanges = true;
     }
 
-    db.versions[userId] = (db.versions[userId] || 1) + 1;
-    saveDatabase(db);
+    if (hadChanges) {
+      db.versions[userId] = (db.versions[userId] || 1) + 1;
+      saveDatabase(db);
+    }
 
     res.json({ success: true, version: db.versions[userId] });
   });

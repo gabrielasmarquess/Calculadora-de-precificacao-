@@ -2168,6 +2168,24 @@
         "category": "Eletrônicos",
         "updatedAt": "2026-10-22T13:59:58.288Z",
         "userId": "usr_owner_default"
+      },
+      {
+        "id": "prod_direct_test_1792680972753",
+        "name": "Produto Teste Direto Preservado",
+        "habitualCost": 25,
+        "referencePrice": 59.9,
+        "category": "Geral",
+        "updatedAt": "2026-10-22T14:56:12.753Z",
+        "userId": "usr_owner_default"
+      },
+      {
+        "id": "phone_saved_1792680972769",
+        "name": "Fone Bluetooth Celular Preservado",
+        "habitualCost": 35,
+        "referencePrice": 89.9,
+        "category": "Eletrônicos",
+        "updatedAt": "2026-10-22T14:56:12.769Z",
+        "userId": "usr_owner_default"
       }
     ],
     "usr_1792617772876_be104f": [
@@ -2516,7 +2534,7 @@
     "usr_1792617723309_8b3e3b": 2,
     "usr_1792617723352_07fdd2": 1,
     "usr_1792617723418_72e2f1": 1,
-    "usr_owner_default": 6,
+    "usr_owner_default": 8,
     "usr_1792617772876_be104f": 2,
     "usr_1792617772916_dd5eed": 2,
     "usr_1792617772964_fa83d7": 1,
